@@ -261,3 +261,23 @@
         flex-direction: column;
     }
 }
+
+/* 登录失败弹窗样式 */
+.login-error-msg {
+    display: block;
+    width: 100%;
+    background: var(--error-color, #e74c3c);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    padding: 10px 0 8px 0;
+    font-size: 15px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+.login-error-msg.show {
+    opacity: 1;
+    transform: translateY(0);
+}

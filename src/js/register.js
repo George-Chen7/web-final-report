@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const avatarPreview = document.getElementById('avatarPreview');
     const avatarInput = document.getElementById('avatarInput');
     const avatarImage = document.getElementById('avatarImage');
+    const usernameInput = document.getElementById('username');
     
     // 错误信息元素
     const studentIdError = document.getElementById('studentIdError');
@@ -30,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const verificationCodeError = document.getElementById('verificationCodeError');
     const interestTagsError = document.getElementById('interestTagsError');
     const agreeTermsError = document.getElementById('agreeTermsError');
+    const usernameError = document.getElementById('usernameError');
     
     // 头像上传预览
     avatarPreview.addEventListener('click', function() {
@@ -127,10 +129,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!value) {
             studentIdError.textContent = '请输入学号';
             return false;
-        } else if (!/^\d{8,12}$/.test(value)) {
-            studentIdError.textContent = '学号格式不正确，应为8-12位数字';
+        } else if (!/^\d{10}$/.test(value)) {
+            studentIdError.textContent = '学号必须为10位数字';
             return false;
         } else {
+            // 校验唯一性
+            const users = JSON.parse(localStorage.getItem('userList')) || [];
+            if (users.some(u => u.studentId === value)) {
+                studentIdError.textContent = '该学号已被注册';
+                return false;
+            }
             studentIdError.textContent = '';
             return true;
         }
@@ -213,21 +221,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function validateVerificationCode() {
-        const value = verificationCodeInput.value.trim();
-        
-        if (!value) {
-            verificationCodeError.textContent = '请输入验证码';
-            return false;
-        } else if (value.length !== 6 || !/^\d+$/.test(value)) {
-            verificationCodeError.textContent = '验证码应为6位数字';
-            return false;
-        } else {
-            verificationCodeError.textContent = '';
-            return true;
-        }
-    }
-    
     function validateInterestTags() {
         if (selectedTags.length === 0) {
             interestTagsError.textContent = '请至少选择1个兴趣标签';
@@ -248,6 +241,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    function validateUsername() {
+        const value = usernameInput.value.trim();
+        if (!value) {
+            usernameError.textContent = '请输入用户名';
+            return false;
+        } else if (!/^[a-zA-Z0-9]{2,16}$/.test(value)) {
+            usernameError.textContent = '用户名格式错误，仅限2-16位英文和数字';
+            return false;
+        } else {
+            // 校验唯一性
+            const users = JSON.parse(localStorage.getItem('userList')) || [];
+            if (users.some(u => u.username === value)) {
+                usernameError.textContent = '该用户名已被注册';
+                return false;
+            }
+            usernameError.textContent = '';
+            return true;
+        }
+    }
+    
     // 输入事件监听
     studentIdInput.addEventListener('input', validateStudentId);
     nameInput.addEventListener('input', validateName);
@@ -255,42 +268,35 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordInput.addEventListener('input', validatePassword);
     confirmPasswordInput.addEventListener('input', validateConfirmPassword);
     emailInput.addEventListener('input', validateEmail);
-    verificationCodeInput.addEventListener('input', validateVerificationCode);
     agreeTermsCheckbox.addEventListener('change', validateAgreeTerms);
+    usernameInput.addEventListener('input', validateUsername);
     
     // 表单提交
     registerForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         // 验证所有字段
+        const isUsernameValid = validateUsername();
         const isStudentIdValid = validateStudentId();
-        const isNameValid = validateName();
         const isNicknameValid = validateNickname();
         const isPasswordValid = validatePassword();
         const isConfirmPasswordValid = validateConfirmPassword();
-        const isEmailValid = validateEmail();
-        const isVerificationCodeValid = validateVerificationCode();
         const isInterestTagsValid = validateInterestTags();
         const isAgreeTermsValid = validateAgreeTerms();
         
-        // 如果所有字段都验证通过
-        if (isStudentIdValid && isNameValid && isNicknameValid && 
-            isPasswordValid && isConfirmPasswordValid && 
-            isEmailValid && isVerificationCodeValid && 
-            isInterestTagsValid && isAgreeTermsValid) {
-            
-            // 模拟注册请求
-            simulateRegister({
-                studentId: studentIdInput.value.trim(),
-                name: nameInput.value.trim(),
-                nickname: nicknameInput.value.trim(),
-                password: passwordInput.value,
-                email: emailInput.value.trim(),
-                verificationCode: verificationCodeInput.value.trim(),
-                interestTags: selectedTags,
-                avatar: avatarImage.src
-            });
+        if (!(isUsernameValid && isStudentIdValid && isNicknameValid && isPasswordValid && isConfirmPasswordValid && isInterestTagsValid && isAgreeTermsValid)) {
+            return;
         }
+        
+        // 模拟注册请求
+        simulateRegister({
+            username: usernameInput.value.trim(),
+            studentId: studentIdInput.value.trim(),
+            nickname: nicknameInput.value.trim(),
+            password: passwordInput.value,
+            interestTags: selectedTags,
+            avatar: avatarImage.src
+        });
     });
     
     // 模拟注册请求
@@ -307,12 +313,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // 保存用户信息到本地存储
             const user = {
                 id: Date.now(),
+                username: data.username,
                 studentId: data.studentId,
-                name: data.name,
                 nickname: data.nickname,
-                email: data.email,
-                avatar: data.avatar,
+                password: data.password,
                 interestTags: data.interestTags,
+                avatar: data.avatar,
                 token: 'simulated_token_' + Date.now()
             };
             

@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const studentIdError = document.getElementById('studentIdError');
     const passwordError = document.getElementById('passwordError');
     const togglePasswordBtn = document.getElementById('togglePassword');
+    const usernameInput = document.getElementById('username');
+    const usernameError = document.getElementById('usernameError');
     
     // 密码显示/隐藏切换
     togglePasswordBtn.addEventListener('click', function() {
@@ -56,65 +58,88 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // 用户名校验
+    function validateUsername() {
+        const value = usernameInput.value.trim();
+        if (!value) {
+            usernameError.textContent = '请输入用户名';
+            return false;
+        } else if (!/^[a-zA-Z0-9]{2,16}$/.test(value)) {
+            usernameError.textContent = '用户名格式错误，仅限2-16位英文和数字';
+            return false;
+        } else {
+            usernameError.textContent = '';
+            return true;
+        }
+    }
+    
     // 输入事件监听
     studentIdInput.addEventListener('input', validateStudentId);
     passwordInput.addEventListener('input', validatePassword);
+    usernameInput.addEventListener('input', validateUsername);
     
-    // 表单提交
+    // 登录表单提交
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        
-        // 验证表单
-        const isStudentIdValid = validateStudentId();
+        const isUsernameValid = validateUsername();
         const isPasswordValid = validatePassword();
-        
-        if (isStudentIdValid && isPasswordValid) {
-            // 模拟登录请求
+        if (isUsernameValid && isPasswordValid) {
             simulateLogin({
-                studentId: studentIdInput.value.trim(),
+                username: usernameInput.value.trim(),
                 password: passwordInput.value,
                 rememberMe: document.getElementById('rememberMe').checked
             });
         }
     });
     
-    // 模拟登录请求
+    // 登录逻辑改为用户名+密码
     function simulateLogin(data) {
-        // 显示加载状态
         const submitBtn = loginForm.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
         submitBtn.textContent = '登录中...';
-        
-        // 模拟网络请求延迟
+        // 移除旧的错误提示
+        let oldMsg = document.getElementById('loginErrorMsg');
+        if (oldMsg) oldMsg.remove();
         setTimeout(() => {
-            // 模拟登录成功
-            if (data.studentId === '12345678' && data.password === 'password123') {
-                // 保存用户信息到本地存储
-                const user = {
-                    id: 1,
-                    studentId: data.studentId,
-                    name: '张三',
-                    avatar: 'src/images/avatar.jpg',
-                    token: 'simulated_token_' + Date.now()
-                };
-                
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                
-                // 显示成功消息
-                showMessage('登录成功，正在跳转...', 'success');
-                
-                // 跳转到首页
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
-            } else {
-                // 显示错误消息
-                showMessage('学号或密码错误，请重试', 'error');
+            const users = JSON.parse(localStorage.getItem('userList')) || [];
+            const user = users.find(u => u.username === data.username);
+            if (!user) {
+                showLoginError('账户不存在');
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
+            } else if (user.password !== data.password) {
+                showLoginError('密码错误');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            } else {
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                showMessage('登录成功，正在跳转...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
             }
-        }, 1500);
+        }, 1000);
+    }
+    
+    // 登录失败弹出提示（按钮上方）
+    function showLoginError(msg) {
+        let errorDiv = document.createElement('div');
+        errorDiv.id = 'loginErrorMsg';
+        errorDiv.className = 'login-error-msg';
+        errorDiv.textContent = msg;
+        // 插入到登录按钮上方
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
+        submitBtn.parentNode.insertBefore(errorDiv, submitBtn);
+        setTimeout(() => {
+            errorDiv.classList.add('show');
+        }, 10);
+        setTimeout(() => {
+            errorDiv.classList.remove('show');
+            errorDiv.addEventListener('transitionend', function() {
+                errorDiv.remove();
+            });
+        }, 2500);
     }
     
     // 显示消息提示

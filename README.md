@@ -40,9 +40,11 @@
 ├── register.html      # 注册页
 ├── profile.html       # 个人主页
 ├── post.html          # 动态详情页
+├── admin.html         # 管理员后台页面
 ├── src/
 │   ├── css/           # 样式文件（reset、通用、各页面样式）
-│   └── js/            # JS 脚本（通用、各页面逻辑）
+│   ├── js/            # JS 脚本（通用、各页面逻辑）
+│   └── admin.css      # 管理员后台样式
 ├── server/            # 后端接口（如有）
 ├── docs/              # 项目文档
 ├── need.txt           # 需求说明

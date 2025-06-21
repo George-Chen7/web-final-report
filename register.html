@@ -47,24 +47,24 @@
                         <input type="file" id="avatarInput" accept="image/*">
                     </div>
                     
+                    <!-- 用户名 -->
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <div class="input-wrapper">
+                            <i class="bi bi-person"></i>
+                            <input type="text" id="username" name="username" placeholder="请输入用户名（仅限英文和数字）" required>
+                        </div>
+                        <div class="error-message" id="usernameError"></div>
+                    </div>
+                    
                     <!-- 学号 -->
                     <div class="form-group">
                         <label for="studentId">学号</label>
                         <div class="input-wrapper">
                             <i class="bi bi-person-badge"></i>
-                            <input type="text" id="studentId" name="studentId" placeholder="请输入学号" required>
+                            <input type="text" id="studentId" name="studentId" placeholder="请输入10位学号" required>
                         </div>
                         <div class="error-message" id="studentIdError"></div>
-                    </div>
-                    
-                    <!-- 姓名 -->
-                    <div class="form-group">
-                        <label for="name">姓名</label>
-                        <div class="input-wrapper">
-                            <i class="bi bi-person"></i>
-                            <input type="text" id="name" name="name" placeholder="请输入真实姓名" required>
-                        </div>
-                        <div class="error-message" id="nameError"></div>
                     </div>
                     
                     <!-- 昵称 -->
@@ -98,29 +98,6 @@
                             <input type="password" id="confirmPassword" name="confirmPassword" placeholder="请再次输入密码" required>
                         </div>
                         <div class="error-message" id="confirmPasswordError"></div>
-                    </div>
-                    
-                    <!-- 邮箱 -->
-                    <div class="form-group">
-                        <label for="email">邮箱</label>
-                        <div class="input-wrapper">
-                            <i class="bi bi-envelope"></i>
-                            <input type="email" id="email" name="email" placeholder="请输入邮箱" required>
-                        </div>
-                        <div class="error-message" id="emailError"></div>
-                    </div>
-                    
-                    <!-- 验证码 -->
-                    <div class="form-group">
-                        <label for="verificationCode">验证码</label>
-                        <div class="verification-code">
-                            <div class="input-wrapper">
-                                <i class="bi bi-shield-lock"></i>
-                                <input type="text" id="verificationCode" name="verificationCode" placeholder="请输入验证码" required>
-                            </div>
-                            <button type="button" id="sendCodeBtn">获取验证码</button>
-                        </div>
-                        <div class="error-message" id="verificationCodeError"></div>
                     </div>
                     
                     <!-- 兴趣标签 -->
