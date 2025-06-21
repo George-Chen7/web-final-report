@@ -12,6 +12,59 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 检查用户登录状态
     checkLoginStatus();
+
+    // 头像下拉菜单优化：移入头像或菜单显示，移出延迟隐藏
+    const userInfo = document.querySelector('.user-info');
+    if (userInfo) {
+        const avatar = userInfo.querySelector('.avatar');
+        const dropdownMenu = userInfo.querySelector('.dropdown-menu');
+        let hideTimer = null;
+        if (avatar && dropdownMenu) {
+            function showMenu() {
+                clearTimeout(hideTimer);
+                dropdownMenu.style.display = 'block';
+            }
+            function hideMenu() {
+                hideTimer = setTimeout(() => {
+                    dropdownMenu.style.display = 'none';
+                }, 300);
+            }
+            avatar.addEventListener('mouseenter', showMenu);
+            avatar.addEventListener('mouseleave', hideMenu);
+            dropdownMenu.addEventListener('mouseenter', showMenu);
+            dropdownMenu.addEventListener('mouseleave', hideMenu);
+        }
+    }
+
+    // 游客操作限制：发布、关注、发送评论
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser && currentUser.role === 'guest') {
+        // 发布动态按钮
+        const publishBtn = document.querySelector('.btn-publish');
+        if (publishBtn) {
+            publishBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('请先登录后才能发布动态');
+            });
+        }
+        // 关注按钮
+        document.querySelectorAll('.btn-follow').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('请先登录后才能关注');
+            });
+        });
+        // 发送评论按钮（评论输入区的发送按钮）
+        document.querySelectorAll('.btn-comment').forEach(btn => {
+            // 只为评论输入区的发送按钮绑定（排除动态区的评论按钮）
+            if (btn.closest('.comment-input')) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert('请先登录后才能评论');
+                });
+            }
+        });
+    }
 });
 
 /**
@@ -70,15 +123,25 @@ function initDropdowns() {
  */
 function checkLoginStatus() {
     // 模拟从localStorage获取用户信息
-    const userInfo = localStorage.getItem('userInfo');
-    
+    let userInfo = localStorage.getItem('currentUser');
+    let user = null;
     if (userInfo) {
-        // 用户已登录
-        const user = JSON.parse(userInfo);
-        updateUIForLoggedInUser(user);
+        user = JSON.parse(userInfo);
+        // 判断管理员
+        if (user.username === 'admin') {
+            user.role = 'admin';
+        } else {
+            user.role = 'user';
+        }
     } else {
-        // 用户未登录
+        // 未登录，设置为游客
+        user = { role: 'guest' };
+        localStorage.setItem('currentUser', JSON.stringify(user));
+    }
+    if (user.role === 'guest') {
         updateUIForGuest();
+    } else {
+        updateUIForLoggedInUser(user);
     }
 }
 
@@ -110,15 +173,23 @@ function updateUIForLoggedInUser(user) {
     // 启用评论输入
     const commentInputs = document.querySelectorAll('.comment-input input');
     const commentButtons = document.querySelectorAll('.btn-comment');
-    
-    commentInputs.forEach(input => {
-        input.disabled = false;
-        input.placeholder = '添加评论...';
-    });
-    
-    commentButtons.forEach(button => {
-        button.disabled = false;
-    });
+    if (user.role === 'user' || user.role === 'admin') {
+        commentInputs.forEach(input => {
+            input.disabled = false;
+            input.placeholder = '添加评论...';
+        });
+        commentButtons.forEach(button => {
+            button.disabled = false;
+        });
+    } else {
+        commentInputs.forEach(input => {
+            input.disabled = true;
+            input.placeholder = '登录后才能评论';
+        });
+        commentButtons.forEach(button => {
+            button.disabled = true;
+        });
+    }
     
     // 更新关注按钮状态
     updateFollowButtonsState(user);
@@ -143,12 +214,10 @@ function updateUIForGuest() {
     // 禁用评论输入
     const commentInputs = document.querySelectorAll('.comment-input input');
     const commentButtons = document.querySelectorAll('.btn-comment');
-    
     commentInputs.forEach(input => {
         input.disabled = true;
         input.placeholder = '登录后才能评论';
     });
-    
     commentButtons.forEach(button => {
         button.disabled = true;
     });
@@ -244,22 +313,12 @@ function formatTime(date) {
  * 退出登录
  */
 function logout() {
-    // 清除本地存储的用户信息
-    localStorage.removeItem('userInfo');
-    
+    // 退出后currentUser写为游客
+    localStorage.setItem('currentUser', JSON.stringify({ role: 'guest' }));
     // 更新UI为游客状态
     updateUIForGuest();
-    
-    // 显示提示消息
-    showToast('退出登录成功', 'success');
-    
-    // 如果在需要登录的页面，跳转到首页
-    const restrictedPages = ['profile.html', 'settings.html', 'messages.html'];
-    const currentPage = window.location.pathname.split('/').pop();
-    
-    if (restrictedPages.includes(currentPage)) {
-        window.location.href = 'index.html';
-    }
+    // 可选：跳转到首页或刷新页面
+    // window.location.href = 'index.html';
 }
 
 // 绑定退出登录事件

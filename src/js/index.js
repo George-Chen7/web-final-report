@@ -82,76 +82,77 @@ function loadPosts(type = 'all', append = false) {
 }
 
 /**
- * 获取动态数据（模拟）
+ * 获取动态数据（从localStorage）
  * @param {string} type - 动态类型
  * @returns {Array} 动态数据数组
  */
 function getPostsData(type) {
-    // 模拟数据
-    const allPosts = [
-        {
-            id: 1,
-            user: {
-                id: 101,
-                name: '学习达人',
-                avatar: 'src/images/avatar-1.svg',
-                department: '计算机学院'
+    let allPosts = JSON.parse(localStorage.getItem('postList'));
+    if (!allPosts) {
+        // 初始化默认动态
+        allPosts = [
+            {
+                id: 1,
+                user: {
+                    id: 101,
+                    name: '学习达人',
+                    avatar: 'src/images/DefaultAvatar.png',
+                    department: '计算机学院'
+                },
+                content: '期末复习攻略分享！#期末复习 #学习方法\n1. 制定合理的复习计划，分配每天的学习任务\n2. 整理笔记和重点知识点，制作思维导图\n3. 多做习题，找出自己的薄弱环节\n4. 保持良好的作息，确保充足的睡眠',
+                images: ['src/images/post-img-1.svg'],
+                time: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2小时前
+                likes: 42,
+                comments: [
+                    {
+                        id: 201,
+                        user: {
+                            id: 102,
+                            name: '摄影爱好者',
+                            avatar: 'src/images/DefaultAvatar.png'
+                        },
+                        content: '非常实用的复习方法，谢谢分享！',
+                        time: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1小时前
+                        likes: 5
+                    }
+                ]
             },
-            content: '期末复习攻略分享！#期末复习 #学习方法\n1. 制定合理的复习计划，分配每天的学习任务\n2. 整理笔记和重点知识点，制作思维导图\n3. 多做习题，找出自己的薄弱环节\n4. 保持良好的作息，确保充足的睡眠',
-            images: ['src/images/post-img-1.svg'],
-            time: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2小时前
-            likes: 42,
-            comments: [
-                {
-                    id: 201,
-                    user: {
-                        id: 102,
-                        name: '摄影爱好者',
-                        avatar: 'src/images/avatar-2.svg'
-                    },
-                    content: '非常实用的复习方法，谢谢分享！',
-                    time: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1小时前
-                    likes: 5
-                }
-            ]
-        },
-        {
-            id: 2,
-            user: {
-                id: 102,
-                name: '摄影爱好者',
-                avatar: 'src/images/avatar-2.svg',
-                department: '艺术学院'
+            {
+                id: 2,
+                user: {
+                    id: 102,
+                    name: '摄影爱好者',
+                    avatar: 'src/images/DefaultAvatar.png',
+                    department: '艺术学院'
+                },
+                content: '校园的春天真美！分享几张今天拍的照片 #校园风光 #摄影',
+                images: ['src/images/post-img-2.svg', 'src/images/post-img-3.svg'],
+                time: new Date(Date.now() - 24 * 60 * 60 * 1000), // 昨天
+                likes: 78,
+                comments: []
             },
-            content: '校园的春天真美！分享几张今天拍的照片 #校园风光 #摄影',
-            images: ['src/images/post-img-2.svg', 'src/images/post-img-3.svg'],
-            time: new Date(Date.now() - 24 * 60 * 60 * 1000), // 昨天
-            likes: 78,
-            comments: []
-        },
-        {
-            id: 3,
-            user: {
-                id: 103,
-                name: '校园歌手',
-                avatar: 'src/images/avatar-3.svg',
-                department: '音乐学院'
-            },
-            content: '校园歌手大赛开始报名啦！欢迎所有热爱音乐的同学参加 #校园活动 #音乐\n时间：5月20日-6月10日\n地点：大学生活动中心\n报名方式：扫描下方二维码或到学生会办公室登记',
-            images: ['src/images/post-img-4.svg'],
-            time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3天前
-            likes: 156,
-            comments: []
-        }
-    ];
-    
-    // 根据类型筛选
+            {
+                id: 3,
+                user: {
+                    id: 103,
+                    name: '校园歌手',
+                    avatar: 'src/images/DefaultAvatar.png',
+                    department: '音乐学院'
+                },
+                content: '校园歌手大赛开始报名啦！欢迎所有热爱音乐的同学参加 #校园活动 #音乐\n时间：5月20日-6月10日\n地点：大学生活动中心\n报名方式：扫描下方二维码或到学生会办公室登记',
+                images: ['src/images/post-img-4.svg'],
+                time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3天前
+                likes: 156,
+                comments: []
+            }
+        ];
+        localStorage.setItem('postList', JSON.stringify(allPosts));
+    }
+    // 类型筛选
     switch (type) {
         case 'following':
-            // 模拟已登录用户关注的用户发布的动态
             return [];
         case 'hot':
-            // 按点赞数排序
             return [...allPosts].sort((a, b) => b.likes - a.likes);
         case 'all':
         default:
@@ -266,60 +267,29 @@ function initPostsLoading() {
             loadPosts(tabType, true);
         });
     }
-    
-    // 实现懒加载
-    window.addEventListener('scroll', function() {
-        const scrollHeight = document.documentElement.scrollHeight;
-        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-        const clientHeight = document.documentElement.clientHeight;
-        
-        // 当滚动到距离底部100px时，自动加载更多
-        if (scrollHeight - scrollTop - clientHeight < 100) {
-            // 防止频繁触发
-            if (!window.isLoading) {
-                window.isLoading = true;
-                
-                // 获取当前活动的标签类型
-                const activeTab = document.querySelector('.content-tabs .tab.active');
-                const tabType = activeTab ? activeTab.dataset.tab : 'all';
-                
-                // 加载更多动态
-                loadPosts(tabType, true);
-                
-                // 设置延迟，防止频繁触发
-                setTimeout(() => {
-                    window.isLoading = false;
-                }, 1000);
-            }
-        }
-    });
 }
 
 /**
  * 初始化动态交互
  */
 function initPostInteractions() {
+    // 获取当前用户
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     // 点赞按钮
     const likeButtons = document.querySelectorAll('.post-actions .btn-like');
-    
     likeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // 检查用户是否登录
-            const userInfo = localStorage.getItem('userInfo');
-            
-            if (!userInfo) {
-                // 未登录，提示登录
-                showToast('请先登录后再操作', 'warning');
+        // 先移除所有旧事件
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        newBtn.addEventListener('click', function(e) {
+            if (currentUser && currentUser.role === 'guest') {
+                e.preventDefault();
+                alert('请先登录后才能点赞');
                 return;
             }
-            
-            // 切换点赞状态
             this.classList.toggle('active');
-            
-            // 更新点赞数
             const likeCount = this.querySelector('span');
             let count = parseInt(likeCount.textContent);
-            
             if (this.classList.contains('active')) {
                 likeCount.textContent = count + 1;
             } else {
@@ -327,20 +297,20 @@ function initPostInteractions() {
             }
         });
     });
-    
     // 评论按钮
     const commentButtons = document.querySelectorAll('.post-actions .btn-comment');
-    
     commentButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // 获取当前动态的评论区
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        newBtn.addEventListener('click', function(e) {
+            if (currentUser && currentUser.role === 'guest') {
+                e.preventDefault();
+                alert('请先登录后才能评论');
+                return;
+            }
             const postItem = this.closest('.post-item');
             const commentsSection = postItem.querySelector('.post-comments');
-            
-            // 切换评论区显示状态
             commentsSection.classList.toggle('show');
-            
-            // 如果显示评论区，则自动聚焦到评论输入框
             if (commentsSection.classList.contains('show')) {
                 const commentInput = commentsSection.querySelector('input');
                 if (commentInput && !commentInput.disabled) {
@@ -349,31 +319,32 @@ function initPostInteractions() {
             }
         });
     });
-    
-    // 关注按钮
-    const followButtons = document.querySelectorAll('.btn-follow');
-    
-    followButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // 检查用户是否登录
-            const userInfo = localStorage.getItem('userInfo');
-            
-            if (!userInfo) {
-                // 未登录，提示登录
-                showToast('请先登录后再操作', 'warning');
+    // 分享按钮
+    const shareButtons = document.querySelectorAll('.post-actions .btn-share');
+    shareButtons.forEach(button => {
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        newBtn.addEventListener('click', function(e) {
+            if (currentUser && currentUser.role === 'guest') {
+                e.preventDefault();
+                alert('请先登录后才能分享');
                 return;
             }
-            
-            // 切换关注状态
-            this.classList.toggle('following');
-            
-            if (this.classList.contains('following')) {
-                this.textContent = '已关注';
-                showToast('关注成功', 'success');
-            } else {
-                this.textContent = '关注';
-                showToast('已取消关注', 'info');
+            // ... 这里可加分享逻辑 ...
+        });
+    });
+    // 收藏按钮
+    const bookmarkButtons = document.querySelectorAll('.post-actions .btn-bookmark');
+    bookmarkButtons.forEach(button => {
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        newBtn.addEventListener('click', function(e) {
+            if (currentUser && currentUser.role === 'guest') {
+                e.preventDefault();
+                alert('请先登录后才能收藏');
+                return;
             }
+            // ... 这里可加收藏逻辑 ...
         });
     });
 }

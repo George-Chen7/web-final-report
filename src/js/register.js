@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 nickname: data.nickname,
                 password: data.password,
                 interestTags: data.interestTags,
-                avatar: data.avatar,
+                avatar: data.avatar || 'src/images/DefaultAvatar.png',
                 token: 'simulated_token_' + Date.now()
             };
             localStorage.setItem('currentUser', JSON.stringify(user));
