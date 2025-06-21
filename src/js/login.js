@@ -2,12 +2,30 @@
  * 登录页面脚本
  */
 
+// 自动初始化 admin 账号到 localStorage
+(function initAdminAccount() {
+    let users = JSON.parse(localStorage.getItem('userList')) || [];
+    if (!users.find(u => u.username === 'admin')) {
+        users.push({
+            username: 'admin',
+            studentId: '1111111111',
+            nickname: 'admin',
+            password: '88888888',
+            interestTags: [],
+            avatar: '',
+            id: Date.now(),
+            banned: false
+        });
+        localStorage.setItem('userList', JSON.stringify(users));
+    }
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
     // 获取表单元素
     const loginForm = document.getElementById('loginForm');
-    const studentIdInput = document.getElementById('studentId');
+    // const studentIdInput = document.getElementById('studentId');
     const passwordInput = document.getElementById('password');
-    const studentIdError = document.getElementById('studentIdError');
+    // const studentIdError = document.getElementById('studentIdError');
     const passwordError = document.getElementById('passwordError');
     const togglePasswordBtn = document.getElementById('togglePassword');
     const usernameInput = document.getElementById('username');
@@ -30,19 +48,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // 表单验证
-    function validateStudentId() {
-        const value = studentIdInput.value.trim();
-        if (!value) {
-            studentIdError.textContent = '请输入学号';
-            return false;
-        } else if (!/^\d{8,12}$/.test(value)) {
-            studentIdError.textContent = '学号格式不正确，应为8-12位数字';
-            return false;
-        } else {
-            studentIdError.textContent = '';
-            return true;
-        }
-    }
+    // function validateStudentId() {
+    //     const value = studentIdInput.value.trim();
+    //     if (!value) {
+    //         studentIdError.textContent = '请输入学号';
+    //         return false;
+    //     } else if (!/^\d{8,12}$/.test(value)) {
+    //         studentIdError.textContent = '学号格式不正确，应为8-12位数字';
+    //         return false;
+    //     } else {
+    //         studentIdError.textContent = '';
+    //         return true;
+    //     }
+    // }
     
     function validatePassword() {
         const value = passwordInput.value;
@@ -74,13 +92,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 输入事件监听
-    studentIdInput.addEventListener('input', validateStudentId);
+    // studentIdInput.addEventListener('input', validateStudentId);
     passwordInput.addEventListener('input', validatePassword);
     usernameInput.addEventListener('input', validateUsername);
     
     // 登录表单提交
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
+        // const isStudentIdValid = validateStudentId();
         const isUsernameValid = validateUsername();
         const isPasswordValid = validatePassword();
         if (isUsernameValid && isPasswordValid) {

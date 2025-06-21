@@ -2,15 +2,33 @@
  * 注册页面脚本
  */
 
+// 自动初始化 admin 账号到 localStorage
+(function initAdminAccount() {
+    let users = JSON.parse(localStorage.getItem('userList')) || [];
+    if (!users.find(u => u.username === 'admin')) {
+        users.push({
+            username: 'admin',
+            studentId: '1111111111',
+            nickname: 'admin',
+            password: '88888888',
+            interestTags: [],
+            avatar: '',
+            id: Date.now(),
+            banned: false
+        });
+        localStorage.setItem('userList', JSON.stringify(users));
+    }
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
     // 获取表单元素
     const registerForm = document.getElementById('registerForm');
     const studentIdInput = document.getElementById('studentId');
-    const nameInput = document.getElementById('name');
+    // const nameInput = document.getElementById('name');
     const nicknameInput = document.getElementById('nickname');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
-    const emailInput = document.getElementById('email');
+    // const emailInput = document.getElementById('email');
     const verificationCodeInput = document.getElementById('verificationCode');
     const agreeTermsCheckbox = document.getElementById('agreeTerms');
     const sendCodeBtn = document.getElementById('sendCodeBtn');
@@ -23,11 +41,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 错误信息元素
     const studentIdError = document.getElementById('studentIdError');
-    const nameError = document.getElementById('nameError');
+    // const nameError = document.getElementById('nameError');
     const nicknameError = document.getElementById('nicknameError');
     const passwordError = document.getElementById('passwordError');
     const confirmPasswordError = document.getElementById('confirmPasswordError');
-    const emailError = document.getElementById('emailError');
+    // const emailError = document.getElementById('emailError');
     const verificationCodeError = document.getElementById('verificationCodeError');
     const interestTagsError = document.getElementById('interestTagsError');
     const agreeTermsError = document.getElementById('agreeTermsError');
@@ -144,20 +162,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function validateName() {
-        const value = nameInput.value.trim();
-        if (!value) {
-            nameError.textContent = '请输入姓名';
-            return false;
-        } else if (value.length < 2) {
-            nameError.textContent = '姓名长度不能少于2个字符';
-            return false;
-        } else {
-            nameError.textContent = '';
-            return true;
-        }
-    }
-    
     function validateNickname() {
         const value = nicknameInput.value.trim();
         if (!value) {
@@ -263,11 +267,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 输入事件监听
     studentIdInput.addEventListener('input', validateStudentId);
-    nameInput.addEventListener('input', validateName);
+    // nameInput.addEventListener('input', validateName);
     nicknameInput.addEventListener('input', validateNickname);
     passwordInput.addEventListener('input', validatePassword);
     confirmPasswordInput.addEventListener('input', validateConfirmPassword);
-    emailInput.addEventListener('input', validateEmail);
+    // emailInput.addEventListener('input', validateEmail);
+    verificationCodeInput.addEventListener('input', validateVerificationCode);
     agreeTermsCheckbox.addEventListener('change', validateAgreeTerms);
     usernameInput.addEventListener('input', validateUsername);
     
@@ -307,9 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.disabled = true;
         submitBtn.textContent = '注册中...';
         
-        // 模拟网络请求延迟
         setTimeout(() => {
-            // 模拟注册成功
             // 保存用户信息到本地存储
             const user = {
                 id: Date.now(),
@@ -321,15 +324,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 avatar: data.avatar,
                 token: 'simulated_token_' + Date.now()
             };
-            
             localStorage.setItem('currentUser', JSON.stringify(user));
-            
+            // 写入 userList
+            let users = JSON.parse(localStorage.getItem('userList')) || [];
+            users.push(user);
+            localStorage.setItem('userList', JSON.stringify(users));
+
+            // 写入数据库（模拟fetch POST到 server/user-db.json）
+            fetch('server/user-db.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(user)
+            }).catch(() => {}); // 仅模拟，实际本地静态页面不会成功
+
             // 显示成功消息
-            showMessage('注册成功，正在跳转...', 'success');
-            
-            // 跳转到首页
+            showMessage('注册成功，正在跳转到登录页面...', 'success');
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = 'login.html';
             }, 1500);
         }, 2000);
     }

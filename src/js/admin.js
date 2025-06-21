@@ -110,10 +110,10 @@ window.onload = function() {
 };
 
 // 默认管理员账号初始化（如未存在）
-(function initAdminAccount() {
-    let users = JSON.parse(localStorage.getItem('userList')) || [];
-    if (!users.find(u => u.studentId === 'admin')) {
-        users.push({ studentId: 'admin', password: '88888888', nickname: '管理员', banned: false });
-        localStorage.setItem('userList', JSON.stringify(users));
-    }
-})(); 
+// (function initAdminAccount() {
+//     let users = JSON.parse(localStorage.getItem('userList')) || [];
+//     if (!users.find(u => u.studentId === 'admin')) {
+//         users.push({ studentId: 'admin', password: '88888888', nickname: '管理员', banned: false });
+//         localStorage.setItem('userList', JSON.stringify(users));
+//     }
+// })(); 
