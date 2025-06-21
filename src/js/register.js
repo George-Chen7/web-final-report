@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
             validateInterestTags();
         });
     });
-    
+    /*
     // 发送验证码
     let countdown = 0;
     let timer = null;
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 模拟发送验证码
         showMessage('验证码已发送到您的邮箱，请查收', 'success');
     });
-    
+    */
     // 表单验证函数
     function validateStudentId() {
         const value = studentIdInput.value.trim();
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordInput.addEventListener('input', validatePassword);
     confirmPasswordInput.addEventListener('input', validateConfirmPassword);
     // emailInput.addEventListener('input', validateEmail);
-    verificationCodeInput.addEventListener('input', validateVerificationCode);
+    //verificationCodeInput.addEventListener('input', validateVerificationCode);
     agreeTermsCheckbox.addEventListener('change', validateAgreeTerms);
     usernameInput.addEventListener('input', validateUsername);
     
