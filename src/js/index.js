@@ -239,14 +239,7 @@ function createPostHTML(post) {
                 <button class="btn-share"><i class="bi bi-share"></i> 分享</button>
                 <button class="btn-bookmark"><i class="bi bi-bookmark"></i> 收藏</button>
             </div>
-            <div class="post-comments">
-                ${commentsHTML}
-                <div class="comment-input">
-                    <img src="src/images/avatar-default.svg" alt="用户头像">
-                    <input type="text" placeholder="添加评论..." disabled>
-                    <button class="btn-comment" disabled>发送</button>
-                </div>
-            </div>
+            <div class="post-comments"><!-- 默认不加show类，收起 --></div>
         </article>
     `;
 }
@@ -270,6 +263,42 @@ function initPostsLoading() {
 }
 
 /**
+ * 生成评论区HTML
+ * @param {Object} post - 动态数据
+ * @returns {string} 评论区HTML字符串
+ */
+function createCommentsHTML(post) {
+    let commentsHTML = '';
+    if (post.comments && post.comments.length > 0) {
+        post.comments.forEach(comment => {
+            commentsHTML += `
+                <div class="comment-item">
+                    <img src="${comment.user.avatar}" alt="用户头像">
+                    <div class="comment-content">
+                        <h4>${comment.user.name}</h4>
+                        <p>${comment.content}</p>
+                        <div class="comment-actions">
+                            <span>${formatTime(comment.time)}</span>
+                            <button>回复</button>
+                            <button><i class="bi bi-heart"></i> ${comment.likes}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    // 评论输入区
+    commentsHTML += `
+        <div class="comment-input">
+            <img src="src/images/DefaultAvatar.png" alt="用户头像">
+            <input type="text" placeholder="添加评论..." disabled>
+            <button class="btn-comment" disabled>发送</button>
+        </div>
+    `;
+    return commentsHTML;
+}
+
+/**
  * 初始化动态交互
  */
 function initPostInteractions() {
@@ -290,10 +319,19 @@ function initPostInteractions() {
             this.classList.toggle('active');
             const likeCount = this.querySelector('span');
             let count = parseInt(likeCount.textContent);
+            const icon = this.querySelector('i');
             if (this.classList.contains('active')) {
                 likeCount.textContent = count + 1;
+                if (icon) {
+                    icon.classList.remove('bi-heart');
+                    icon.classList.add('bi-heart-fill');
+                }
             } else {
                 likeCount.textContent = count - 1;
+                if (icon) {
+                    icon.classList.remove('bi-heart-fill');
+                    icon.classList.add('bi-heart');
+                }
             }
         });
     });
@@ -310,12 +348,29 @@ function initPostInteractions() {
             }
             const postItem = this.closest('.post-item');
             const commentsSection = postItem.querySelector('.post-comments');
-            commentsSection.classList.toggle('show');
-            if (commentsSection.classList.contains('show')) {
-                const commentInput = commentsSection.querySelector('input');
-                if (commentInput && !commentInput.disabled) {
-                    commentInput.focus();
+            // 获取动态id
+            const postId = postItem.getAttribute('data-post-id');
+            // 展开/收起逻辑
+            if (!commentsSection.classList.contains('show')) {
+                // 展开，渲染评论内容
+                const posts = getPostsData();
+                const post = posts.find(p => String(p.id) === String(postId));
+                commentsSection.innerHTML = createCommentsHTML(post);
+                commentsSection.classList.add('show');
+                // 评论输入区可用性根据用户权限调整
+                if (currentUser && (currentUser.role === 'user' || currentUser.role === 'admin')) {
+                    const input = commentsSection.querySelector('input');
+                    const btn = commentsSection.querySelector('.btn-comment');
+                    if (input) {
+                        input.disabled = false;
+                        input.placeholder = '添加评论...';
+                    }
+                    if (btn) btn.disabled = false;
                 }
+            } else {
+                // 收起，清空内容
+                commentsSection.classList.remove('show');
+                commentsSection.innerHTML = '';
             }
         });
     });
