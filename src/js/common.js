@@ -186,7 +186,25 @@ function updateUIForLoggedInUser(user) {
     
     // 显示发布动态区域
     const createPost = document.querySelector('.create-post');
-    if (createPost) createPost.style.display = 'block';
+    const createPostModule = document.querySelector('.create-post-module');
+    if (createPost) {
+        createPost.style.display = 'block';
+        
+        // 更新发布动态栏中的用户头像
+        const postAvatar = createPost.querySelector('.post-input img');
+        if (postAvatar) {
+            postAvatar.src = user.avatar || 'src/images/DefaultAvatar.png';
+        }
+    }
+    if (createPostModule) {
+        createPostModule.style.display = 'block';
+        
+        // 更新发布动态模块中的用户头像
+        const postAvatar = createPostModule.querySelector('.post-input img');
+        if (postAvatar) {
+            postAvatar.src = user.avatar || 'src/images/DefaultAvatar.png';
+        }
+    }
     
     // 启用评论输入
     const commentInputs = document.querySelectorAll('.comment-input input');
@@ -231,7 +249,9 @@ function updateUIForGuest() {
     
     // 隐藏发布动态区域
     const createPost = document.querySelector('.create-post');
+    const createPostModule = document.querySelector('.create-post-module');
     if (createPost) createPost.style.display = 'none';
+    if (createPostModule) createPostModule.style.display = 'none';
     
     // 禁用评论输入
     const commentInputs = document.querySelectorAll('.comment-input input');

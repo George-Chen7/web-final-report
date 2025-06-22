@@ -144,19 +144,65 @@ function getPostsData(type) {
                 time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3天前
                 likes: 156,
                 comments: []
+            },
+            {
+                id: 4,
+                user: {
+                    id: 104,
+                    name: '美食达人',
+                    avatar: 'src/images/DefaultAvatar.png',
+                    department: '食品学院'
+                },
+                content: '今天在食堂发现了一道超级好吃的菜！推荐给大家 #校园美食 #美食分享\n菜品：红烧肉\n价格：8元\n位置：第一食堂二楼\n评分：⭐⭐⭐⭐⭐',
+                images: ['src/images/DefaultAvatar.png'],
+                time: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6小时前
+                likes: 89,
+                comments: []
+            },
+            {
+                id: 5,
+                user: {
+                    id: 105,
+                    name: '运动健将',
+                    avatar: 'src/images/DefaultAvatar.png',
+                    department: '体育学院'
+                },
+                content: '校运会即将开始，大家准备好了吗？ #校运会 #运动\n项目：100米、跳远、铅球、接力赛\n时间：下周三开始\n地点：校体育场\n欢迎大家来加油助威！',
+                images: ['src/images/DefaultAvatar.png', 'src/images/DefaultAvatar.png'],
+                time: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12小时前
+                likes: 203,
+                comments: []
+            },
+            {
+                id: 6,
+                user: {
+                    id: 106,
+                    name: '考研学姐',
+                    avatar: 'src/images/DefaultAvatar.png',
+                    department: '理学院'
+                },
+                content: '考研经验分享帖 #考研经验 #学习分享\n1. 制定详细的复习计划，每天按计划执行\n2. 多做真题，熟悉考试题型\n3. 保持良好的心态，不要给自己太大压力\n4. 合理安排时间，注意劳逸结合\n希望这些经验对大家有帮助！',
+                images: ['src/images/DefaultAvatar.png'],
+                time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1天前
+                likes: 267,
+                comments: []
             }
         ];
         localStorage.setItem('postList', JSON.stringify(allPosts));
     }
+    
     // 类型筛选
     switch (type) {
         case 'following':
+            // 关注动态 - 暂时返回空数组，后续可以添加关注逻辑
             return [];
         case 'hot':
-            return [...allPosts].sort((a, b) => b.likes - a.likes);
+            // 热门推荐 - 按点赞数排序，返回前5条
+            return [...allPosts].sort((a, b) => b.likes - a.likes).slice(0, 5);
         case 'all':
         default:
-            return allPosts;
+            // 全站动态 - 按时间排序
+            return [...allPosts].sort((a, b) => new Date(b.time) - new Date(a.time));
     }
 }
 

@@ -20,9 +20,7 @@
             <nav class="nav">
                 <ul>
                     <li><a href="index.html" class="active">首页</a></li>
-                    <li><a href="explore.html">发现</a></li>
-                    <li><a href="topic.html">话题</a></li>
-                    <li><a href="about.html">关于</a></li>
+                    <li><a href="post.html">发布</a></li>
                 </ul>
             </nav>
             <div class="user-actions">
@@ -59,6 +57,24 @@
                 <button class="tab" data-tab="following">关注动态</button>
                 <button class="tab" data-tab="hot">热门推荐</button>
             </div>
+
+            <!-- 发布动态模块 (登录后显示) -->
+            <!-- 
+            <div class="create-post-module" style="display: none;">
+                <div class="post-input">
+                    <img src="src/images/DefaultAvatar.png" alt="用户头像">
+                    <div class="input-area">
+                        <textarea placeholder="分享你的校园生活..."></textarea>
+                        <div class="post-actions">
+                            <button><i class="bi bi-image"></i> 图片</button>
+                            <button><i class="bi bi-hash"></i> 话题</button>
+                            <button><i class="bi bi-geo-alt"></i> 位置</button>
+                            <button class="btn-publish">发布</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            -->
 
             <!-- 侧边栏 -->
             <aside class="sidebar">
@@ -118,22 +134,6 @@
 
             <!-- 动态内容区 -->
             <section class="posts-container">
-                <!-- 发布动态按钮 (登录后显示) -->
-                <div class="create-post" style="display: none;">
-                    <div class="post-input">
-                        <img src="src/images/DefaultAvatar.png" alt="用户头像">
-                        <div class="input-area">
-                            <textarea placeholder="分享你的校园生活..."></textarea>
-                            <div class="post-actions">
-                                <button><i class="bi bi-image"></i> 图片</button>
-                                <button><i class="bi bi-hash"></i> 话题</button>
-                                <button><i class="bi bi-geo-alt"></i> 位置</button>
-                                <button class="btn-publish">发布</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- 动态列表 -->
                 <div class="posts-list">
                     <!-- 动态项由JS渲染 -->
