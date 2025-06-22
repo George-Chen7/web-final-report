@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化动态交互
     initPostInteractions();
+    
+    // 自动加载全站动态内容
+    loadPosts('all');
 });
 
 /**
@@ -212,6 +215,19 @@ function getPostsData(type) {
  * @returns {string} 动态HTML字符串
  */
 function createPostHTML(post) {
+    // 获取当前用户
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    // 判断是否显示关注按钮还是删除按钮
+    let actionButtonHTML = '';
+    if (currentUser && (currentUser.username === post.user.name || currentUser.id === post.user.id)) {
+        // 如果是当前用户发布的动态，显示删除按钮
+        actionButtonHTML = `<button class="btn-delete" data-post-id="${post.id}">删除</button>`;
+    } else {
+        // 如果不是当前用户发布的动态，显示关注按钮
+        actionButtonHTML = `<button class="btn-follow" data-user-id="${post.user.id}">关注</button>`;
+    }
+    
     // 处理图片展示
     let imagesHTML = '';
     if (post.images && post.images.length > 0) {
@@ -273,7 +289,7 @@ function createPostHTML(post) {
                     <h3>${post.user.name}</h3>
                     <p class="post-meta">${post.user.department} · ${formatTime(post.time)}</p>
                 </div>
-                <button class="btn-follow" data-user-id="${post.user.id}">关注</button>
+                ${actionButtonHTML}
             </div>
             <div class="post-content">
                 <p>${formattedContent}</p>
@@ -350,6 +366,37 @@ function createCommentsHTML(post) {
 function initPostInteractions() {
     // 获取当前用户
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    // 删除按钮
+    const deleteButtons = document.querySelectorAll('.btn-delete');
+    deleteButtons.forEach(button => {
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const postId = this.getAttribute('data-post-id');
+            if (confirm('确定要删除这条动态吗？删除后无法恢复。')) {
+                deletePost(postId);
+            }
+        });
+    });
+    
+    // 关注按钮
+    const followButtons = document.querySelectorAll('.btn-follow');
+    followButtons.forEach(button => {
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!currentUser) {
+                alert('请先登录后才能关注用户');
+                return;
+            }
+            const userId = this.getAttribute('data-user-id');
+            toggleFollow(userId, this);
+        });
+    });
+    
     // 点赞按钮
     const likeButtons = document.querySelectorAll('.post-actions .btn-like');
     likeButtons.forEach(button => {
@@ -381,6 +428,7 @@ function initPostInteractions() {
             }
         });
     });
+    
     // 评论按钮
     const commentButtons = document.querySelectorAll('.post-actions .btn-comment');
     commentButtons.forEach(button => {
@@ -420,6 +468,7 @@ function initPostInteractions() {
             }
         });
     });
+    
     // 分享按钮
     const shareButtons = document.querySelectorAll('.post-actions .btn-share');
     shareButtons.forEach(button => {
@@ -434,6 +483,7 @@ function initPostInteractions() {
             // ... 这里可加分享逻辑 ...
         });
     });
+    
     // 收藏按钮
     const bookmarkButtons = document.querySelectorAll('.post-actions .btn-bookmark');
     bookmarkButtons.forEach(button => {
@@ -448,4 +498,91 @@ function initPostInteractions() {
             // ... 这里可加收藏逻辑 ...
         });
     });
+}
+
+/**
+ * 删除动态
+ * @param {string} postId - 动态ID
+ */
+function deletePost(postId) {
+    // 获取所有动态数据
+    let posts = JSON.parse(localStorage.getItem('postList') || '[]');
+    
+    // 找到要删除的动态
+    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
+    
+    if (postIndex !== -1) {
+        // 从数组中删除该动态
+        posts.splice(postIndex, 1);
+        
+        // 更新localStorage
+        localStorage.setItem('postList', JSON.stringify(posts));
+        
+        // 从页面中移除该动态元素
+        const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+        if (postElement) {
+            postElement.remove();
+        }
+        
+        // 显示删除成功消息
+        alert('动态删除成功！');
+    } else {
+        alert('删除失败，动态不存在！');
+    }
+}
+
+/**
+ * 切换关注状态
+ * @param {string} userId - 用户ID
+ * @param {HTMLElement} button - 关注按钮元素
+ */
+function toggleFollow(userId, button) {
+    // 获取当前用户的关注列表
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    let followingList = JSON.parse(localStorage.getItem(`following_${currentUser.username}`) || '[]');
+    
+    const isFollowing = followingList.includes(userId);
+    
+    if (isFollowing) {
+        // 取消关注
+        followingList = followingList.filter(id => id !== userId);
+        button.textContent = '关注';
+        button.classList.remove('following');
+        alert('已取消关注');
+    } else {
+        // 添加关注
+        followingList.push(userId);
+        button.textContent = '已关注';
+        button.classList.add('following');
+        alert('关注成功！');
+    }
+    
+    // 保存关注列表
+    localStorage.setItem(`following_${currentUser.username}`, JSON.stringify(followingList));
+}
+
+/**
+ * 格式化时间显示
+ * @param {Date} date - 日期对象
+ * @returns {string} 格式化后的时间字符串
+ */
+function formatTime(date) {
+    const now = new Date();
+    const diff = now - new Date(date);
+    
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (minutes < 1) {
+        return '刚刚';
+    } else if (minutes < 60) {
+        return `${minutes}分钟前`;
+    } else if (hours < 24) {
+        return `${hours}小时前`;
+    } else if (days < 7) {
+        return `${days}天前`;
+    } else {
+        return new Date(date).toLocaleDateString();
+    }
 }

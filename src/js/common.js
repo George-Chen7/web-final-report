@@ -206,6 +206,12 @@ function updateUIForLoggedInUser(user) {
         }
     }
     
+    // 隐藏侧边栏游客提示
+    const guestCard = document.querySelector('.guest-card');
+    if (guestCard) {
+        guestCard.style.display = 'none';
+    }
+    
     // 启用评论输入
     const commentInputs = document.querySelectorAll('.comment-input input');
     const commentButtons = document.querySelectorAll('.btn-comment');
@@ -252,6 +258,12 @@ function updateUIForGuest() {
     const createPostModule = document.querySelector('.create-post-module');
     if (createPost) createPost.style.display = 'none';
     if (createPostModule) createPostModule.style.display = 'none';
+    
+    // 显示侧边栏游客提示
+    const guestCard = document.querySelector('.guest-card');
+    if (guestCard) {
+        guestCard.style.display = 'block';
+    }
     
     // 禁用评论输入
     const commentInputs = document.querySelectorAll('.comment-input input');

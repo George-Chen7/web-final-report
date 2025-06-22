@@ -14,7 +14,7 @@
     <header class="header">
         <div class="container">
             <div class="logo">
-                <img src="src/images/logo.png" alt="荔荔社区">
+                <img src="src/images/荔荔社区logo.png" alt="荔荔社区">
                 <h1>荔荔社区</h1>
             </div>
             <nav class="nav">
@@ -23,26 +23,26 @@
                     <li><a href="post.html" class="active">发布</a></li>
                 </ul>
             </nav>
-            <div class="user-actions" id="userActions">
-                <!-- 用户登录后显示 -->
-                <div class="user-menu" id="userMenu">
-                    <div class="user-avatar">
-                        <img src="src/images/DefaultAvatar.png" alt="用户头像" id="userAvatar">
+            <div class="user-actions">
+                <div class="search-box">
+                    <input type="text" placeholder="搜索内容...">
+                    <button><i class="bi bi-search"></i></button>
+                </div>
+                <div class="auth-buttons">
+                    <a href="login.html" class="btn btn-login">登录</a>
+                    <a href="register.html" class="btn btn-register">注册</a>
+                </div>
+                <!-- 登录后显示的用户信息 -->
+                <div class="user-info" style="display: none;">
+                    <div class="avatar">
+                        <img src="src/images/DefaultAvatar.png" alt="用户头像">
+                        <span class="notification">3</span>
                     </div>
                     <div class="dropdown-menu">
-                        <ul>
-                            <li><a href="profile.html"><i class="bi bi-person"></i> 个人资料</a></li>
-                            <li><a href="messages.html"><i class="bi bi-chat"></i> 我的消息</a></li>
-                            <li><a href="settings.html"><i class="bi bi-gear"></i> 设置</a></li>
-                            <li><a href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
-                        </ul>
+                        <a href="profile.html"><i class="bi bi-person"></i> 个人主页</a>
+                        <a href="settings.html"><i class="bi bi-gear"></i> 设置</a>
+                        <a href="#" id="logout"><i class="bi bi-box-arrow-right"></i> 退出登录</a>
                     </div>
-                </div>
-                
-                <!-- 游客显示 -->
-                <div class="guest-actions" id="guestActions">
-                    <a href="login.html" class="btn btn-outline">登录</a>
-                    <a href="register.html" class="btn btn-primary">注册</a>
                 </div>
             </div>
         </div>
@@ -100,15 +100,6 @@
                         </div>
                     </div>
                     
-                    <!-- 位置信息 -->
-                    <div class="form-group">
-                        <div class="location-section">
-                            <button type="button" class="location-btn" id="locationBtn">
-                                <i class="bi bi-geo-alt"></i> <span id="locationText">添加位置</span>
-                            </button>
-                        </div>
-                    </div>
-                    
                     <!-- 隐私设置 -->
                     <div class="form-group">
                         <div class="privacy-section">
@@ -148,58 +139,6 @@
             </div>
         </div>
     </main>
-
-    <!-- 位置选择模态框 -->
-    <div class="modal" id="locationModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>选择位置</h2>
-                <button class="close-modal" id="closeLocationModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="search-location">
-                    <input type="text" id="searchLocation" placeholder="搜索位置...">
-                </div>
-                <div class="location-list" id="locationList">
-                    <div class="location-item" data-location="广州大学城">
-                        <i class="bi bi-geo-alt"></i>
-                        <div class="location-info">
-                            <div class="location-name">广州大学城</div>
-                            <div class="location-address">广州市番禺区</div>
-                        </div>
-                    </div>
-                    <div class="location-item" data-location="广州大学城图书馆">
-                        <i class="bi bi-geo-alt"></i>
-                        <div class="location-info">
-                            <div class="location-name">广州大学城图书馆</div>
-                            <div class="location-address">广州市番禺区广州大学城</div>
-                        </div>
-                    </div>
-                    <div class="location-item" data-location="广州大学城中心湖">
-                        <i class="bi bi-geo-alt"></i>
-                        <div class="location-info">
-                            <div class="location-name">广州大学城中心湖</div>
-                            <div class="location-address">广州市番禺区广州大学城</div>
-                        </div>
-                    </div>
-                    <div class="location-item" data-location="广州大学">
-                        <i class="bi bi-geo-alt"></i>
-                        <div class="location-info">
-                            <div class="location-name">广州大学</div>
-                            <div class="location-address">广州市番禺区广州大学城</div>
-                        </div>
-                    </div>
-                    <div class="location-item" data-location="中山大学">
-                        <i class="bi bi-geo-alt"></i>
-                        <div class="location-info">
-                            <div class="location-name">中山大学</div>
-                            <div class="location-address">广州市番禺区广州大学城</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- 底部信息 -->
     <footer class="footer">

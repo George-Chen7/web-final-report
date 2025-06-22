@@ -15,14 +15,18 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initPage() {
     // 检查登录状态
-    checkLoginStatus();
-    
-    // 如果未登录，跳转到登录页面
-    if (!isLoggedIn()) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) {
         showMessage('请先登录后再发布动态', 'error');
         setTimeout(() => {
             window.location.href = './login.html';
         }, 1500);
+        return;
+    }
+    
+    // 调用common.js中的登录状态检查函数，确保UI正确显示
+    if (typeof checkLoginStatus === 'function') {
+        checkLoginStatus();
     }
 }
 
@@ -31,7 +35,7 @@ function initPage() {
  */
 function bindEvents() {
     // 图片上传
-    const imageUpload = document.getElementById('image-upload');
+    const imageUpload = document.getElementById('imageUpload');
     if (imageUpload) {
         imageUpload.addEventListener('change', handleImageUpload);
     }
@@ -43,37 +47,13 @@ function bindEvents() {
     });
     
     // 添加自定义话题
-    const addTopicBtn = document.getElementById('add-topic-btn');
+    const addTopicBtn = document.getElementById('addCustomTopic');
     if (addTopicBtn) {
         addTopicBtn.addEventListener('click', addCustomTopic);
     }
     
-    // 位置按钮点击
-    const locationBtn = document.getElementById('location-btn');
-    if (locationBtn) {
-        locationBtn.addEventListener('click', openLocationModal);
-    }
-    
-    // 关闭位置模态框
-    const closeLocationModal = document.getElementById('close-location-modal');
-    if (closeLocationModal) {
-        closeLocationModal.addEventListener('click', closeLocationModalHandler);
-    }
-    
-    // 位置项点击
-    const locationItems = document.querySelectorAll('.location-item');
-    locationItems.forEach(item => {
-        item.addEventListener('click', selectLocation);
-    });
-    
-    // 位置搜索
-    const locationSearch = document.getElementById('location-search');
-    if (locationSearch) {
-        locationSearch.addEventListener('input', searchLocation);
-    }
-    
     // 取消按钮
-    const cancelBtn = document.getElementById('cancel-btn');
+    const cancelBtn = document.getElementById('cancelBtn');
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
             if (confirm('确定要取消发布吗？已编辑的内容将不会保存。')) {
@@ -83,7 +63,7 @@ function bindEvents() {
     }
     
     // 表单提交
-    const postForm = document.getElementById('post-form');
+    const postForm = document.getElementById('postForm');
     if (postForm) {
         postForm.addEventListener('submit', handleSubmit);
     }
@@ -95,16 +75,20 @@ function bindEvents() {
  */
 function handleImageUpload(e) {
     const files = e.target.files;
-    const preview = document.getElementById('image-preview');
-    const errorElement = document.getElementById('image-error');
+    const preview = document.getElementById('uploadPreview');
+    const errorElement = document.getElementById('contentError');
     
     // 清除错误信息
-    errorElement.textContent = '';
+    if (errorElement) {
+        errorElement.textContent = '';
+    }
     
     // 检查图片数量限制
     const existingImages = preview.querySelectorAll('.preview-item').length;
     if (existingImages + files.length > 9) {
-        errorElement.textContent = '最多只能上传9张图片';
+        if (errorElement) {
+            errorElement.textContent = '最多只能上传9张图片';
+        }
         return;
     }
     
@@ -112,13 +96,17 @@ function handleImageUpload(e) {
     Array.from(files).forEach(file => {
         // 检查文件类型
         if (!file.type.startsWith('image/')) {
-            errorElement.textContent = '只能上传图片文件';
+            if (errorElement) {
+                errorElement.textContent = '只能上传图片文件';
+            }
             return;
         }
         
         // 检查文件大小（限制为5MB）
         if (file.size > 5 * 1024 * 1024) {
-            errorElement.textContent = '图片大小不能超过5MB';
+            if (errorElement) {
+                errorElement.textContent = '图片大小不能超过5MB';
+            }
             return;
         }
         
@@ -134,7 +122,7 @@ function handleImageUpload(e) {
         // 创建删除按钮
         const removeBtn = document.createElement('div');
         removeBtn.className = 'remove-image';
-        removeBtn.innerHTML = '<i class="ri-close-line"></i>';
+        removeBtn.innerHTML = '<i class="bi bi-x"></i>';
         removeBtn.addEventListener('click', function() {
             preview.removeChild(previewItem);
         });
@@ -164,9 +152,15 @@ function toggleTopicTag(e) {
     const selectedTags = document.querySelectorAll('.topic-tag.selected');
     if (selectedTags.length > 3) {
         tag.classList.remove('selected');
-        document.getElementById('topic-error').textContent = '最多只能选择3个话题';
+        const topicError = document.getElementById('contentError');
+        if (topicError) {
+            topicError.textContent = '最多只能选择3个话题';
+        }
     } else {
-        document.getElementById('topic-error').textContent = '';
+        const topicError = document.getElementById('contentError');
+        if (topicError) {
+            topicError.textContent = '';
+        }
     }
 }
 
@@ -174,112 +168,54 @@ function toggleTopicTag(e) {
  * 添加自定义话题
  */
 function addCustomTopic() {
-    const customTopicInput = document.getElementById('custom-topic');
+    const customTopicInput = document.getElementById('customTopic');
     const topicValue = customTopicInput.value.trim();
-    const topicError = document.getElementById('topic-error');
-    const topicTags = document.getElementById('topic-tags');
+    const topicError = document.getElementById('contentError');
+    const topicTags = document.getElementById('topicTags');
     
     // 验证输入
     if (!topicValue) {
-        topicError.textContent = '话题不能为空';
+        if (topicError) {
+            topicError.textContent = '话题不能为空';
+        }
         return;
     }
     
     if (topicValue.length > 20) {
-        topicError.textContent = '话题不能超过20个字符';
+        if (topicError) {
+            topicError.textContent = '话题不能超过20个字符';
+        }
         return;
     }
     
     // 检查是否已存在相同话题
     const existingTags = document.querySelectorAll('.topic-tag');
     for (let i = 0; i < existingTags.length; i++) {
-        if (existingTags[i].getAttribute('data-topic') === topicValue) {
-            topicError.textContent = '该话题已存在';
+        if (existingTags[i].getAttribute('data-tag') === topicValue) {
+            if (topicError) {
+                topicError.textContent = '该话题已存在';
+            }
             return;
         }
     }
     
-    // 检查话题数量限制
-    if (existingTags.length >= 20) {
-        topicError.textContent = '话题数量已达上限';
-        return;
-    }
-    
     // 创建新话题标签
-    const newTag = document.createElement('span');
+    const newTag = document.createElement('div');
     newTag.className = 'topic-tag';
-    newTag.setAttribute('data-topic', topicValue);
-    newTag.textContent = topicValue;
+    newTag.setAttribute('data-tag', topicValue);
+    newTag.textContent = '#' + topicValue;
     newTag.addEventListener('click', toggleTopicTag);
     
     // 添加到话题区域
     topicTags.appendChild(newTag);
     
-    // 清空输入框和错误信息
+    // 清空输入框
     customTopicInput.value = '';
-    topicError.textContent = '';
-}
-
-/**
- * 打开位置选择模态框
- */
-function openLocationModal() {
-    const modal = document.getElementById('location-modal');
-    modal.classList.add('active');
     
-    // 阻止页面滚动
-    document.body.style.overflow = 'hidden';
-}
-
-/**
- * 关闭位置选择模态框
- */
-function closeLocationModalHandler() {
-    const modal = document.getElementById('location-modal');
-    modal.classList.remove('active');
-    
-    // 恢复页面滚动
-    document.body.style.overflow = '';
-}
-
-/**
- * 选择位置
- * @param {Event} e - 事件对象
- */
-function selectLocation(e) {
-    const locationItem = e.currentTarget;
-    const locationName = locationItem.getAttribute('data-location');
-    const locationText = document.getElementById('location-text');
-    const locationBtn = document.getElementById('location-btn');
-    
-    // 更新位置文本
-    locationText.textContent = locationName;
-    
-    // 添加选中样式
-    locationBtn.classList.add('active');
-    
-    // 关闭模态框
-    closeLocationModalHandler();
-}
-
-/**
- * 搜索位置
- * @param {Event} e - 事件对象
- */
-function searchLocation(e) {
-    const searchValue = e.target.value.toLowerCase();
-    const locationItems = document.querySelectorAll('.location-item');
-    
-    locationItems.forEach(item => {
-        const locationName = item.getAttribute('data-location').toLowerCase();
-        const locationAddress = item.querySelector('.location-address').textContent.toLowerCase();
-        
-        if (locationName.includes(searchValue) || locationAddress.includes(searchValue)) {
-            item.style.display = '';
-        } else {
-            item.style.display = 'none';
-        }
-    });
+    // 清除错误信息
+    if (topicError) {
+        topicError.textContent = '';
+    }
 }
 
 /**
@@ -290,22 +226,24 @@ function handleSubmit(e) {
     e.preventDefault();
     
     // 获取表单数据
-    const content = document.getElementById('post-content').value.trim();
+    const content = document.getElementById('postContent').value.trim();
     const images = Array.from(document.querySelectorAll('.preview-item img')).map(img => img.src);
-    const topics = Array.from(document.querySelectorAll('.topic-tag.selected')).map(tag => tag.getAttribute('data-topic'));
-    const locationBtn = document.getElementById('location-btn');
-    const location = locationBtn.classList.contains('active') ? document.getElementById('location-text').textContent : null;
+    const topics = Array.from(document.querySelectorAll('.topic-tag.selected')).map(tag => tag.getAttribute('data-tag'));
     const privacy = document.querySelector('input[name="privacy"]:checked').value;
     
     // 验证内容
-    const contentError = document.getElementById('content-error');
+    const contentError = document.getElementById('contentError');
     if (!content && images.length === 0) {
-        contentError.textContent = '请输入内容或上传图片';
+        if (contentError) {
+            contentError.textContent = '请输入内容或上传图片';
+        }
         return;
     }
     
     if (content.length > 1000) {
-        contentError.textContent = '内容不能超过1000个字符';
+        if (contentError) {
+            contentError.textContent = '内容不能超过1000个字符';
+        }
         return;
     }
     
@@ -316,7 +254,6 @@ function handleSubmit(e) {
         content: content,
         images: images,
         topics: topics,
-        location: location,
         privacy: privacy,
         createdAt: new Date().toISOString(),
         likes: 0,
@@ -334,20 +271,41 @@ function handleSubmit(e) {
  */
 function simulatePostRequest(postData) {
     // 显示加载状态
-    const submitBtn = document.getElementById('submit-btn');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="ri-loader-2-line ri-spin"></i> 发布中...';
+    const submitBtn = document.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> 发布中...';
+    }
     
     // 模拟网络请求延迟
     setTimeout(() => {
         // 获取本地存储的动态数据
-        let posts = JSON.parse(localStorage.getItem('posts') || '[]');
+        let posts = JSON.parse(localStorage.getItem('postList') || '[]');
         
-        // 添加新动态
-        posts.unshift(postData);
+        // 获取当前用户信息
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        
+        // 构建完整的动态数据
+        const newPost = {
+            id: postData.id,
+            user: {
+                id: currentUser.id || currentUser.username,
+                name: currentUser.nickname || currentUser.name || currentUser.username,
+                avatar: currentUser.avatar || 'src/images/DefaultAvatar.png',
+                department: currentUser.department || '未知学院'
+            },
+            content: postData.content,
+            images: postData.images,
+            time: new Date(),
+            likes: 0,
+            comments: []
+        };
+        
+        // 添加新动态到开头
+        posts.unshift(newPost);
         
         // 保存到本地存储
-        localStorage.setItem('posts', JSON.stringify(posts));
+        localStorage.setItem('postList', JSON.stringify(posts));
         
         // 显示成功消息
         showMessage('动态发布成功', 'success');

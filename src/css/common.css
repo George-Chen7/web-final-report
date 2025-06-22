@@ -82,6 +82,21 @@
     background-color: var(--text-lighter);
 }
 
+.btn-delete {
+    background-color: var(--error-color);
+    color: var(--white);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-delete:hover {
+    background-color: #d32f2f;
+}
+
 /* 表单元素 */
 input[type="text"],
 input[type="password"],

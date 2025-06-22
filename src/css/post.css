@@ -49,7 +49,7 @@
     padding: 15px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
-    resize: vertical;
+    resize: none;
     font-size: 16px;
     transition: var(--transition);
 }
@@ -212,35 +212,8 @@
 }
 
 .custom-topic button:hover {
-    background-color: var(--primary-dark);
-}
-
-/* 位置信息 */
-.location-section {
-    display: flex;
-    justify-content: flex-start;
-}
-
-.location-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 8px 15px;
-    background-color: var(--bg-color);
-    border: none;
-    border-radius: 20px;
-    color: var(--text-color);
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.location-btn:hover {
-    background-color: var(--border-color);
-}
-
-.location-btn.active {
-    background-color: var(--primary-light);
-    color: var(--primary-color);
+    background-color: var(--primary-color);
+    color: var(--white);
 }
 
 /* 隐私设置 */
@@ -296,128 +269,11 @@
     margin-top: 30px;
 }
 
-/* 模态框 */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal.active {
-    display: flex;
-}
-
-.modal-content {
-    background-color: var(--white);
-    border-radius: var(--radius);
-    width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: var(--shadow);
-}
-
-.modal-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.modal-header h2 {
-    font-size: 18px;
-    font-weight: 600;
-}
-
-.close-modal {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: var(--text-light);
-    transition: var(--transition);
-}
-
-.close-modal:hover {
-    color: var(--text-color);
-}
-
-.modal-body {
-    padding: 20px;
-}
-
-/* 位置搜索 */
-.search-location {
-    margin-bottom: 15px;
-}
-
-.search-location input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    transition: var(--transition);
-}
-
-.search-location input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-}
-
-.location-list {
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.location-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 15px;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.location-item:last-child {
-    border-bottom: none;
-}
-
-.location-item:hover {
-    background-color: var(--bg-hover);
-}
-
-.location-item i {
-    margin-right: 10px;
-    color: var(--primary-color);
-}
-
-.location-info {
-    flex: 1;
-}
-
-.location-name {
-    font-weight: 500;
-    margin-bottom: 3px;
-}
-
-.location-address {
-    font-size: 12px;
-    color: var(--text-light);
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
     .post-container {
-        padding: 20px;
         margin: 0 15px;
+        padding: 20px;
     }
     
     .preview-item {
