@@ -2,6 +2,57 @@
  * 个人资料页面脚本
  */
 
+// 全局取消关注函数
+function unfollowUser(userId) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+    
+    if (!currentUser) {
+        alert('请先登录');
+        return;
+    }
+    
+    // 找到目标用户
+    const targetUser = userList.find(u => String(u.id) === String(userId));
+    if (!targetUser) {
+        alert('用户不存在');
+        return;
+    }
+    
+    // 确认取消关注
+    if (!confirm(`确定要取消关注 ${targetUser.nickname || targetUser.username} 吗？`)) {
+        return;
+    }
+    
+    // 从当前用户的following数组中移除
+    const currentUserIndex = userList.findIndex(u => String(u.id) === String(currentUser.id));
+    if (currentUserIndex !== -1) {
+        const currentUserData = userList[currentUserIndex];
+        if (currentUserData.following) {
+            // 移除用户ID和用户名
+            currentUserData.following = currentUserData.following.filter(id => 
+                String(id) !== String(userId) && String(id) !== targetUser.username
+            );
+            
+            // 更新用户列表
+            localStorage.setItem('userList', JSON.stringify(userList));
+            
+            // 更新当前用户信息
+            localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+            
+            // 重新加载关注列表和统计数据
+            if (typeof loadFollowingList === 'function') {
+                loadFollowingList();
+            }
+            if (typeof loadFollowLists === 'function') {
+                loadFollowLists();
+            }
+            
+            alert('已取消关注');
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // 检查用户登录状态
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -40,6 +91,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const userPhotoGrid = document.getElementById('userPhotoGrid');
     const userFriendsList = document.getElementById('userFriendsList');
     
+    // 标签切换相关元素
+    const profileTabs = document.querySelectorAll('.profile-tabs li');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    const followingList = document.getElementById('followingList');
+    
     // 编辑资料相关元素
     const editProfileBtn = document.getElementById('editProfileBtn');
     const editProfileModal = document.getElementById('editProfileModal');
@@ -67,6 +123,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadUserPosts();
     // 加载关注和粉丝列表
     loadFollowLists();
+    
+    // 初始化标签切换
+    initProfileTabs();
     
     // 监听localStorage变化，实时更新关注和粉丝数
     window.addEventListener('storage', function(e) {
@@ -413,5 +472,88 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }, 3000);
+    }
+    
+    // 初始化标签切换
+    function initProfileTabs() {
+        profileTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabName = this.getAttribute('data-tab');
+                
+                // 移除所有活动状态
+                profileTabs.forEach(t => t.classList.remove('active'));
+                tabPanes.forEach(p => p.classList.remove('active'));
+                
+                // 添加当前标签的活动状态
+                this.classList.add('active');
+                
+                // 显示对应的内容
+                const targetPane = document.getElementById(tabName + 'Tab');
+                if (targetPane) {
+                    targetPane.classList.add('active');
+                    
+                    // 如果切换到关注列表，加载关注数据
+                    if (tabName === 'following') {
+                        loadFollowingList();
+                    }
+                }
+            });
+        });
+    }
+    
+    // 加载关注列表
+    function loadFollowingList() {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+        
+        if (!currentUser || !followingList) return;
+        
+        const followingArr = currentUser.following || [];
+        
+        if (followingArr.length === 0) {
+            // 显示空状态
+            followingList.innerHTML = `
+                <div class="following-empty">
+                    <i class="bi bi-people"></i>
+                    <h3>还没有关注任何人</h3>
+                    <p>去发现更多有趣的人吧！</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // 清空列表
+        followingList.innerHTML = '';
+        
+        // 获取关注用户的详细信息
+        const followingUsers = [];
+        followingArr.forEach(followingId => {
+            // 跳过用户名（只处理用户ID）
+            if (typeof followingId === 'number' || !isNaN(Number(followingId))) {
+                const user = userList.find(u => String(u.id) === String(followingId));
+                if (user) {
+                    followingUsers.push(user);
+                }
+            }
+        });
+        
+        // 渲染关注列表
+        followingUsers.forEach(user => {
+            const followingItem = document.createElement('div');
+            followingItem.className = 'following-item';
+            followingItem.innerHTML = `
+                <div class="following-avatar">
+                    <img src="${user.avatar || 'src/images/DefaultAvatar.png'}" alt="${user.nickname || user.username}">
+                </div>
+                <div class="following-info">
+                    <div class="following-name">${user.nickname || user.username}</div>
+                    <div class="following-username">@${user.username}</div>
+                </div>
+                <div class="following-actions">
+                    <button class="btn btn-outline btn-sm" onclick="unfollowUser('${user.id}')">取消关注</button>
+                </div>
+            `;
+            followingList.appendChild(followingItem);
+        });
     }
 });

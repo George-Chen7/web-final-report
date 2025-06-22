@@ -660,14 +660,11 @@
 @media (max-width: 768px) {
     .profile-info {
         flex-direction: column;
-        align-items: center;
         text-align: center;
-        padding: 20px 15px;
     }
     
     .profile-avatar {
-        margin-right: 0;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
     }
     
     .profile-stats {
@@ -675,19 +672,16 @@
     }
     
     .profile-actions {
-        margin-left: 0;
-        margin-top: 15px;
-        align-self: center;
+        margin-top: 20px;
     }
     
     .profile-tabs ul {
-        overflow-x: auto;
-        white-space: nowrap;
-        padding-bottom: 5px;
+        flex-direction: column;
     }
     
     .profile-tabs li {
-        padding: 10px 15px;
+        margin-right: 0;
+        margin-bottom: 10px;
     }
     
     .info-list {
@@ -695,30 +689,93 @@
     }
     
     .photo-grid {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     }
     
     .friends-list {
         grid-template-columns: 1fr;
     }
+    
+    /* 关注列表响应式 */
+    .following-list {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+    }
+    
+    .following-item {
+        padding: 12px;
+    }
+    
+    .following-avatar {
+        width: 50px;
+        height: 50px;
+        margin-right: 12px;
+    }
+    
+    .following-avatar img {
+        max-width: 50px;
+        max-height: 50px;
+    }
+    
+    .following-name,
+    .following-username {
+        max-width: 120px;
+    }
 }
 
 @media (max-width: 576px) {
     .profile-cover {
-        height: 180px;
-    }
-    
-    .profile-avatar img {
-        width: 120px;
         height: 120px;
     }
     
+    .profile-avatar img {
+        width: 80px;
+        height: 80px;
+    }
+    
     .profile-content {
-        padding: 0 15px 15px;
+        padding: 15px;
     }
     
     .post-images {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        grid-template-columns: 1fr;
+    }
+    
+    /* 关注列表小屏幕样式 */
+    .following-list {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 15px 0;
+    }
+    
+    .following-item {
+        padding: 10px;
+    }
+    
+    .following-avatar {
+        width: 45px;
+        height: 45px;
+        margin-right: 10px;
+    }
+    
+    .following-avatar img {
+        max-width: 45px;
+        max-height: 45px;
+    }
+    
+    .following-name {
+        font-size: 14px;
+        max-width: 100px;
+    }
+    
+    .following-username {
+        font-size: 12px;
+        max-width: 100px;
+    }
+    
+    .following-actions .btn {
+        padding: 4px 8px;
+        font-size: 11px;
     }
 }
 
@@ -873,26 +930,29 @@
 }
 
 .btn-outline {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-}
-
-.btn-outline:hover {
-    background: var(--bg-color);
-    border-color: var(--primary-color);
+    background-color: transparent;
+    border: 1px solid var(--primary-color);
     color: var(--primary-color);
 }
 
+.btn-outline:hover {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 15px;
+}
+
 .btn-primary {
-    background: var(--primary-color);
-    border: 1px solid var(--primary-color);
+    background-color: var(--primary-color);
     color: var(--white);
 }
 
 .btn-primary:hover {
-    background: var(--primary-dark);
-    border-color: var(--primary-dark);
+    background-color: var(--primary-hover);
 }
 
 .empty-state {
@@ -907,4 +967,106 @@
     font-size: 48px;
     display: block;
     margin-bottom: 15px;
+}
+
+/* 关注列表 */
+.following-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.following-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-radius: var(--radius);
+    background-color: var(--white);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.following-item:hover {
+    background-color: var(--bg-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.following-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.following-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    max-width: 60px;
+    max-height: 60px;
+}
+
+.following-info {
+    flex: 1;
+    min-width: 0;
+    margin-right: 10px;
+}
+
+.following-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-color);
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+.following-username {
+    font-size: 14px;
+    color: var(--text-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+.following-actions {
+    margin-left: 10px;
+}
+
+.following-actions .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 15px;
+}
+
+/* 空状态 */
+.following-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-light);
+}
+
+.following-empty i {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.following-empty h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.following-empty p {
+    font-size: 14px;
+    line-height: 1.5;
 }
