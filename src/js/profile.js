@@ -525,34 +525,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
                 
-                // 处理评论展示
-                let commentsHTML = '';
-                if (post.comments && post.comments.length > 0) {
-                    commentsHTML = '<div class="post-comments">';
-                    post.comments.forEach(comment => {
-                        // 兼容两种数据结构
-                        const commentUser = comment.user || {
-                            name: comment.nickname || comment.username,
-                            avatar: comment.avatar
-                        };
-                        const commentTime = comment.time || comment.publishTime;
-                        
-                        commentsHTML += `
-                            <div class="comment-item">
-                                <div class="comment-avatar">
-                                    <img src="${commentUser.avatar || 'src/images/DefaultAvatar.png'}" alt="用户头像">
-                                </div>
-                                <div class="comment-content">
-                                    <div class="comment-author">${commentUser.name}</div>
-                                    <div class="comment-text">${comment.content}</div>
-                                    <div class="comment-time">${formatTime(commentTime)}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    commentsHTML += '</div>';
-                }
-                
                 // 格式化内容，处理换行和话题标签
                 const formattedContent = post.content
                     .replace(/\n/g, '</p><p>')
@@ -601,10 +573,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="post-footer">
                         <div class="post-stats">
                             <span class="post-stat"><i class="bi bi-heart"></i> ${post.likes || 0}</span>
-                            <span class="post-stat"><i class="bi bi-chat"></i> ${post.comments ? post.comments.length : 0}</span>
+                            <span class="post-stat post-comment-btn" style="cursor: pointer;"><i class="bi bi-chat"></i> ${post.comments ? post.comments.length : 0}</span>
                         </div>
-                        ${commentsHTML}
                     </div>
+                    <div class="post-comments"><!-- 默认收起，点击评论按钮后展开 --></div>
                 `;
                 userPostList.appendChild(postElement);
             });
@@ -612,6 +584,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 同步动态数量
         postCount.textContent = userPosts.length;
+        
+        // 初始化评论交互
+        initProfilePostInteractions();
     }
     
     // 加载关注和粉丝列表
@@ -827,5 +802,203 @@ document.addEventListener('DOMContentLoaded', function() {
             
             followingList.appendChild(followingItem);
         });
+    }
+    
+    // 初始化个人主页动态交互
+    function initProfilePostInteractions() {
+        // 获取当前用户
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        
+        // 评论按钮点击事件
+        const commentButtons = document.querySelectorAll('.post-comment-btn');
+        commentButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                if (currentUser && currentUser.role === 'guest') {
+                    e.preventDefault();
+                    alert('请先登录后才能评论');
+                    return;
+                }
+                
+                const postItem = this.closest('.post-item');
+                const commentsSection = postItem.querySelector('.post-comments');
+                const postId = postItem.getAttribute('data-post-id');
+                
+                // 展开/收起逻辑
+                if (!commentsSection.classList.contains('show')) {
+                    // 展开，渲染评论内容
+                    const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
+                    const post = allPosts.find(p => String(p.id) === String(postId));
+                    
+                    if (post) {
+                        commentsSection.innerHTML = createProfileCommentsHTML(post);
+                        commentsSection.classList.add('show');
+                        
+                        // 立即启用评论输入区（如果用户已登录）
+                        const input = commentsSection.querySelector('input');
+                        const btn = commentsSection.querySelector('.btn-send-comment');
+                        
+                        if (currentUser && currentUser.role !== 'guest') {
+                            // 登录用户，启用输入框和发送按钮
+                            if (input) {
+                                input.disabled = false;
+                                input.placeholder = '添加评论...';
+                                input.focus(); // 自动聚焦到输入框
+                            }
+                            if (btn) {
+                                btn.disabled = false;
+                            }
+                        } else {
+                            // 游客或未登录用户，保持禁用状态
+                            if (input) {
+                                input.disabled = true;
+                                input.placeholder = '请先登录后评论...';
+                            }
+                            if (btn) {
+                                btn.disabled = true;
+                            }
+                        }
+                        
+                        // 绑定评论发送事件
+                        bindProfileCommentEvents(postId);
+                    }
+                } else {
+                    // 收起，清空内容
+                    commentsSection.classList.remove('show');
+                    commentsSection.innerHTML = '';
+                }
+            });
+        });
+    }
+    
+    // 生成个人主页评论HTML
+    function createProfileCommentsHTML(post) {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        let commentsHTML = '';
+        
+        if (post.comments && post.comments.length > 0) {
+            post.comments.forEach(comment => {
+                // 兼容两种数据结构
+                const commentUser = comment.user || {
+                    name: comment.nickname || comment.username,
+                    avatar: comment.avatar
+                };
+                const commentTime = comment.time || comment.publishTime;
+                
+                commentsHTML += `
+                    <div class="comment-item">
+                        <div class="comment-avatar">
+                            <img src="${commentUser.avatar || 'src/images/DefaultAvatar.png'}" alt="用户头像">
+                        </div>
+                        <div class="comment-content">
+                            <div class="comment-author">${commentUser.name}</div>
+                            <div class="comment-text">${comment.content}</div>
+                            <div class="comment-time">${formatTime(commentTime)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        // 评论输入区 - 根据用户状态设置初始状态
+        const isLoggedIn = currentUser && currentUser.role !== 'guest';
+        const inputDisabled = !isLoggedIn;
+        const inputPlaceholder = isLoggedIn ? '添加评论...' : '请先登录后评论...';
+        const btnDisabled = !isLoggedIn;
+        
+        commentsHTML += `
+            <div class="comment-input">
+                <img src="${currentUser && currentUser.avatar ? currentUser.avatar : 'src/images/DefaultAvatar.png'}" alt="用户头像">
+                <input type="text" placeholder="${inputPlaceholder}" ${inputDisabled ? 'disabled' : ''}>
+                <button class="btn-send-comment" ${btnDisabled ? 'disabled' : ''}>发送</button>
+            </div>
+        `;
+        return commentsHTML;
+    }
+    
+    // 绑定个人主页评论事件
+    function bindProfileCommentEvents(postId) {
+        const commentsSection = document.querySelector(`[data-post-id="${postId}"] .post-comments`);
+        const input = commentsSection.querySelector('input');
+        const btn = commentsSection.querySelector('.btn-send-comment');
+        
+        // 发送按钮点击事件
+        btn.addEventListener('click', function() {
+            const content = input.value.trim();
+            if (content) {
+                sendProfileComment(postId, content);
+                input.value = '';
+            }
+        });
+        
+        // 回车发送
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const content = input.value.trim();
+                if (content) {
+                    sendProfileComment(postId, content);
+                    input.value = '';
+                }
+            }
+        });
+        
+        // 输入时启用/禁用发送按钮
+        input.addEventListener('input', function() {
+            btn.disabled = !input.value.trim();
+        });
+    }
+    
+    // 发送个人主页评论
+    function sendProfileComment(postId, content) {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser || currentUser.role === 'guest') {
+            alert('请先登录后才能评论');
+            return;
+        }
+        
+        // 获取所有动态
+        const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
+        const postIndex = allPosts.findIndex(p => String(p.id) === String(postId));
+        
+        if (postIndex === -1) {
+            alert('动态不存在');
+            return;
+        }
+        
+        // 创建新评论
+        const newComment = {
+            id: Date.now(),
+            userId: currentUser.id,
+            username: currentUser.username,
+            nickname: currentUser.nickname || currentUser.username,
+            avatar: currentUser.avatar || 'src/images/DefaultAvatar.png',
+            content: content,
+            publishTime: new Date().toISOString(),
+            likes: 0
+        };
+        
+        // 添加到动态的评论数组
+        if (!allPosts[postIndex].comments) {
+            allPosts[postIndex].comments = [];
+        }
+        allPosts[postIndex].comments.push(newComment);
+        
+        // 保存到localStorage
+        localStorage.setItem('postList', JSON.stringify(allPosts));
+        
+        // 更新评论数量显示
+        const postItem = document.querySelector(`[data-post-id="${postId}"]`);
+        const commentBtn = postItem.querySelector('.post-comment-btn');
+        const currentCount = allPosts[postIndex].comments.length;
+        commentBtn.innerHTML = `<i class="bi bi-chat"></i> ${currentCount}`;
+        
+        // 重新渲染评论区域
+        const commentsSection = postItem.querySelector('.post-comments');
+        commentsSection.innerHTML = createProfileCommentsHTML(allPosts[postIndex]);
+        
+        // 重新绑定事件
+        bindProfileCommentEvents(postId);
+        
+        // 显示成功消息
+        showMessage('评论发送成功', 'success');
     }
 });
