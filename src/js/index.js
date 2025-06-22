@@ -227,8 +227,11 @@ function getPostsData(type) {
             case 'public':
                 return true; // 公开帖子所有人都能看到
             case 'followers':
-                // 粉丝可见：检查当前用户是否关注了帖子作者
-                if (currentUser.following && currentUser.following.includes(post.user.id)) {
+                // 粉丝可见：检查当前用户是否关注了帖子作者（通过用户ID或用户名）
+                if (currentUser.following && (
+                    currentUser.following.includes(post.user.id) || 
+                    currentUser.following.includes(post.user.name)
+                )) {
                     return true;
                 }
                 return false;
@@ -242,8 +245,17 @@ function getPostsData(type) {
     // 类型筛选
     switch (type) {
         case 'following':
-            // 关注动态 - 暂时返回空数组，后续可以添加关注逻辑
-            return [];
+            // 关注动态：显示关注用户的所有公开和粉丝可见帖子
+            if (currentUser.role === 'guest') {
+                return []; // 游客无法查看关注动态
+            }
+            return filteredPosts.filter(post => {
+                // 只显示关注用户的帖子
+                return currentUser.following && (
+                    currentUser.following.includes(post.user.id) || 
+                    currentUser.following.includes(post.user.name)
+                );
+            });
         case 'hot':
             // 热门推荐 - 按点赞数排序，返回前5条
             return [...filteredPosts].sort((a, b) => b.likes - a.likes).slice(0, 5);
