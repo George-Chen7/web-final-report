@@ -53,6 +53,12 @@ function unfollowUser(userId) {
     }
 }
 
+// 全局访问用户主页函数
+function visitUserProfile(userId) {
+    // 跳转到用户主页，传递用户ID参数
+    window.location.href = `profile.html?userId=${userId}`;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // 检查用户登录状态
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -62,13 +68,36 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
+    // 获取clickUser（从URL参数或localStorage）
+    let clickUser = null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const clickUserId = urlParams.get('userId');
+    
+    if (clickUserId) {
+        // 从URL参数获取用户ID，从userList中查找用户信息
+        const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+        clickUser = userList.find(user => String(user.id) === String(clickUserId));
+        
+        if (!clickUser) {
+            alert('用户不存在');
+            window.location.href = 'index.html';
+            return;
+        }
+    } else {
+        // 没有URL参数，说明访问的是自己的主页
+        clickUser = currentUser;
+    }
+    
+    // 判断是否访问自己的主页
+    const isOwnProfile = String(currentUser.id) === String(clickUser.id);
+    
     // 调用common.js中的登录状态检查函数，确保UI正确显示
     if (typeof checkLoginStatus === 'function') {
         checkLoginStatus();
     }
     
     // 更新页面标题
-    document.title = `${currentUser.nickname || currentUser.name} 的个人资料 - 荔荔社区`;
+    document.title = `${clickUser.nickname || clickUser.name} 的个人资料 - 荔荔社区`;
     
     // 获取DOM元素
     const profileName = document.getElementById('profileName');
@@ -148,6 +177,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 编辑资料模态框
     editProfileBtn.addEventListener('click', function() {
+        // 只有访问自己的主页时才能编辑
+        if (!isOwnProfile) {
+            alert('只能编辑自己的资料');
+            return;
+        }
+        
         console.log('编辑按钮被点击');
         // 填充表单数据
         fillEditForm();
@@ -197,6 +232,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 头像上传
     editAvatarBtn.addEventListener('click', function() {
+        // 只有访问自己的主页时才能上传头像
+        if (!isOwnProfile) {
+            alert('只能编辑自己的头像');
+            return;
+        }
         avatarInput.click();
     });
     
@@ -224,6 +264,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 封面上传
     editCoverBtn.addEventListener('click', function() {
+        // 只有访问自己的主页时才能上传封面
+        if (!isOwnProfile) {
+            alert('只能编辑自己的封面');
+            return;
+        }
         coverInput.click();
     });
     
@@ -250,6 +295,12 @@ document.addEventListener('DOMContentLoaded', function() {
     editProfileForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
+        // 只有访问自己的主页时才能提交编辑
+        if (!isOwnProfile) {
+            alert('只能编辑自己的资料');
+            return;
+        }
+        
         // 获取表单数据
         const formData = {
             nickname: editNickname.value.trim(),
@@ -271,8 +322,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载用户资料
     function loadUserProfile() {
-        // 从本地存储获取用户资料
-        const user = JSON.parse(localStorage.getItem('currentUser'));
+        // 从clickUser获取用户资料
+        const user = clickUser;
         
         // 更新页面显示
         profileName.textContent = user.nickname || user.name;
@@ -291,11 +342,28 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 更新统计数据（动态数量由loadUserPosts更新，关注和粉丝数由loadFollowLists更新）
         postCount.textContent = user.postCount || '0';
+        
+        // 根据是否访问自己的主页来控制编辑按钮的显示
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        const editAvatarBtn = document.getElementById('editAvatarBtn');
+        const editCoverBtn = document.getElementById('editCoverBtn');
+        
+        if (isOwnProfile) {
+            // 自己的主页，显示编辑按钮
+            if (editProfileBtn) editProfileBtn.style.display = 'block';
+            if (editAvatarBtn) editAvatarBtn.style.display = 'block';
+            if (editCoverBtn) editCoverBtn.style.display = 'block';
+        } else {
+            // 他人的主页，隐藏编辑按钮
+            if (editProfileBtn) editProfileBtn.style.display = 'none';
+            if (editAvatarBtn) editAvatarBtn.style.display = 'none';
+            if (editCoverBtn) editCoverBtn.style.display = 'none';
+        }
     }
     
     // 填充编辑表单
     function fillEditForm() {
-        const user = JSON.parse(localStorage.getItem('currentUser'));
+        const user = clickUser;
         
         editNickname.value = user.nickname || user.name;
         editGender.value = user.gender || '保密';
@@ -321,6 +389,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新用户资料
     function updateUserProfile(data) {
+        // 只有访问自己的主页时才能更新资料
+        if (!isOwnProfile) {
+            alert('只能编辑自己的资料');
+            return;
+        }
+        
         // 获取当前用户数据
         const user = JSON.parse(localStorage.getItem('currentUser'));
         
@@ -329,6 +403,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 保存到本地存储
         localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        // 更新clickUser数据
+        clickUser = user;
         
         // 更新页面显示
         loadUserProfile();
@@ -341,8 +418,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadUserPosts() {
         // 获取所有动态
         const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
-        // 只筛选当前用户发布的动态
-        const userPosts = allPosts.filter(post => post.user && (post.user.id === currentUser.id || post.user.name === currentUser.username));
+        // 只筛选clickUser发布的动态
+        const userPosts = allPosts.filter(post => post.user && (post.user.id === clickUser.id || post.user.name === clickUser.username));
         // 渲染动态列表
         userPostList.innerHTML = '';
         if (userPosts.length === 0) {
@@ -377,22 +454,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载关注和粉丝列表
     function loadFollowLists() {
-        // 重新获取当前用户信息，确保数据是最新的
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        // 重新获取用户信息，确保数据是最新的
         const userList = JSON.parse(localStorage.getItem('userList') || '[]');
         
-        if (!currentUser) return;
+        // 更新clickUser的最新信息
+        const updatedClickUser = userList.find(u => String(u.id) === String(clickUser.id));
+        if (updatedClickUser) {
+            clickUser = updatedClickUser;
+        }
         
-        // 关注数：从当前用户的following数组获取长度
-        const followingArr = currentUser.following || [];
+        if (!clickUser) return;
+        
+        // 关注数：从clickUser的following数组获取长度
+        const followingArr = clickUser.following || [];
         followingCount.textContent = followingArr.length;
         
-        // 粉丝数：遍历所有用户，统计following数组中包含当前用户ID的用户数量
+        // 粉丝数：遍历所有用户，统计following数组中包含clickUser ID的用户数量
         // 确保数据类型一致，转换为字符串进行比较
-        const currentUserId = String(currentUser.id);
+        const clickUserId = String(clickUser.id);
         const followersArr = userList.filter(u => {
             if (!u.following || !Array.isArray(u.following)) return false;
-            return u.following.some(id => String(id) === currentUserId);
+            return u.following.some(id => String(id) === clickUserId);
         });
         followerCount.textContent = followersArr.length;
     }
@@ -503,12 +585,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载关注列表
     function loadFollowingList() {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         const userList = JSON.parse(localStorage.getItem('userList') || '[]');
         
-        if (!currentUser || !followingList) return;
+        // 更新clickUser的最新信息
+        const updatedClickUser = userList.find(u => String(u.id) === String(clickUser.id));
+        if (updatedClickUser) {
+            clickUser = updatedClickUser;
+        }
         
-        const followingArr = currentUser.following || [];
+        if (!clickUser || !followingList) return;
+        
+        const followingArr = clickUser.following || [];
         
         if (followingArr.length === 0) {
             // 显示空状态
@@ -541,6 +628,18 @@ document.addEventListener('DOMContentLoaded', function() {
         followingUsers.forEach(user => {
             const followingItem = document.createElement('div');
             followingItem.className = 'following-item';
+            
+            // 根据是否访问自己的主页来决定按钮显示和样式
+            let actionButton = '';
+            if (isOwnProfile) {
+                // 访问自己的主页，显示取消关注按钮
+                actionButton = `<button class="btn btn-outline btn-sm unfollow-btn" onclick="event.stopPropagation(); unfollowUser('${user.id}')">取消关注</button>`;
+            } else {
+                // 访问他人的主页，添加clickable类显示点击提示
+                followingItem.classList.add('clickable');
+                actionButton = '';
+            }
+            
             followingItem.innerHTML = `
                 <div class="following-avatar">
                     <img src="${user.avatar || 'src/images/DefaultAvatar.png'}" alt="${user.nickname || user.username}">
@@ -550,9 +649,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="following-username">@${user.username}</div>
                 </div>
                 <div class="following-actions">
-                    <button class="btn btn-outline btn-sm" onclick="unfollowUser('${user.id}')">取消关注</button>
+                    ${actionButton}
                 </div>
             `;
+            
+            // 添加点击事件，让整个卡片可以点击进入用户主页
+            followingItem.addEventListener('click', function(e) {
+                // 如果点击的是取消关注按钮，不执行跳转
+                if (e.target.classList.contains('unfollow-btn')) {
+                    return;
+                }
+                // 跳转到用户主页
+                visitUserProfile(user.id);
+            });
+            
             followingList.appendChild(followingItem);
         });
     }

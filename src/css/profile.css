@@ -986,12 +986,37 @@
     border: 1px solid var(--border-color);
     transition: var(--transition);
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
 
 .following-item:hover {
     background-color: var(--bg-hover);
     transform: translateY(-2px);
     box-shadow: var(--shadow);
+    border-color: var(--primary-color);
+}
+
+.following-item:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 当不是自己的主页时，显示点击提示 */
+.following-item.clickable::after {
+    content: '点击查看主页';
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--primary-color);
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.following-item.clickable:hover::after {
+    opacity: 1;
 }
 
 .following-avatar {
@@ -1045,6 +1070,18 @@
     padding: 6px 12px;
     font-size: 12px;
     border-radius: 15px;
+}
+
+/* 取消关注按钮特殊样式 */
+.unfollow-btn {
+    background-color: transparent !important;
+    border: 1px solid var(--danger-color, #dc3545) !important;
+    color: var(--danger-color, #dc3545) !important;
+}
+
+.unfollow-btn:hover {
+    background-color: var(--danger-color, #dc3545) !important;
+    color: var(--white) !important;
 }
 
 /* 空状态 */
