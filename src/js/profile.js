@@ -104,6 +104,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // 判断是否访问自己的主页
     const isOwnProfile = String(currentUser.id) === String(clickUser.id);
     
+    // 检查用户是否被封禁
+    const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+    const userInList = userList.find(u => u.username === clickUser.username);
+    if (userInList && userInList.banned) {
+        // 显示封禁提示
+        if (typeof showToast === 'function') {
+            showToast('该用户已被封禁', 'warning');
+        } else {
+            // 如果showToast函数不存在，使用alert
+            alert('该用户已被封禁');
+        }
+    }
+    
     // 调用common.js中的登录状态检查函数，确保UI正确显示
     if (typeof checkLoginStatus === 'function') {
         checkLoginStatus();
