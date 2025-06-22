@@ -288,7 +288,17 @@
 }
 
 .post-comments {
-    margin-top: 15px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
+    opacity: 0;
+    padding: 0 16px;
+}
+
+.post-comments.show {
+    max-height: 500px;
+    opacity: 1;
+    padding: 16px;
 }
 
 .comment-item {
@@ -340,35 +350,35 @@
 .comment-input {
     display: flex;
     align-items: center;
-    margin-top: 15px;
+    margin-top: 12px;
 }
 
 .comment-input img {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    margin-right: 10px;
+    margin-right: 8px;
 }
 
 .comment-input input {
     flex: 1;
-    height: 36px;
-    padding: 0 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 18px;
-    margin-right: 10px;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 8px;
 }
 
-.btn-comment {
-    background-color: var(--primary-color);
-    color: var(--white);
-    border-radius: 18px;
-    padding: 6px 12px;
-    font-size: 14px;
+.comment-input button {
+    padding: 6px 16px;
+    border: none;
+    background: #4caf50;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
-.btn-comment:disabled {
-    background-color: var(--text-lighter);
+.comment-input button:disabled {
+    background: #ccc;
     cursor: not-allowed;
 }
 
