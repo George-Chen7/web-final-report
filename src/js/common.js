@@ -4,6 +4,9 @@
 
 // DOM加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
+    // 初始化主题切换
+    initThemeToggle();
+    
     // 初始化返回顶部按钮
     initBackToTop();
     
@@ -524,3 +527,75 @@ function initPresetUsers() {
     localStorage.setItem('userList', JSON.stringify(users));
 }
 window.initPresetUsers = initPresetUsers;
+
+/**
+ * 初始化主题切换功能
+ */
+function initThemeToggle() {
+    // 获取主题切换按钮
+    const themeToggle = document.getElementById('themeToggle');
+    if (!themeToggle) return;
+    
+    // 获取当前主题
+    let currentTheme = localStorage.getItem('theme') || 'light';
+    
+    // 应用当前主题
+    applyTheme(currentTheme);
+    
+    // 更新按钮图标
+    updateThemeIcon(currentTheme);
+    
+    // 绑定点击事件
+    themeToggle.addEventListener('click', function() {
+        // 切换主题
+        currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        // 保存到localStorage
+        localStorage.setItem('theme', currentTheme);
+        
+        // 应用新主题
+        applyTheme(currentTheme);
+        
+        // 更新按钮图标
+        updateThemeIcon(currentTheme);
+        
+        // 显示提示
+        showToast(`已切换到${currentTheme === 'light' ? '亮色' : '暗色'}主题`, 'success');
+    });
+}
+
+/**
+ * 应用主题
+ * @param {string} theme - 主题名称 (light/dark)
+ */
+function applyTheme(theme) {
+    const html = document.documentElement;
+    
+    if (theme === 'dark') {
+        html.setAttribute('data-theme', 'dark');
+    } else {
+        html.removeAttribute('data-theme');
+    }
+}
+
+/**
+ * 更新主题切换按钮图标
+ * @param {string} theme - 主题名称 (light/dark)
+ */
+function updateThemeIcon(theme) {
+    const themeToggle = document.getElementById('themeToggle');
+    if (!themeToggle) return;
+    
+    const icon = themeToggle.querySelector('i');
+    if (icon) {
+        if (theme === 'dark') {
+            icon.className = 'bi bi-moon-fill';
+        } else {
+            icon.className = 'bi bi-sun-fill';
+        }
+    }
+}
+
+// 将主题切换函数挂载到全局，供其他页面使用
+window.applyTheme = applyTheme;
+window.updateThemeIcon = updateThemeIcon;

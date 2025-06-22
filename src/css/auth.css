@@ -6,13 +6,14 @@
     min-height: calc(100vh - 60px - 300px); /* 减去头部和底部的高度 */
     display: flex;
     align-items: center;
+    background-color: var(--page-bg);
 }
 
 /* 认证容器 */
 .auth-container {
     max-width: 450px;
     margin: 0 auto;
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 30px;
@@ -144,7 +145,7 @@
 
 .auth-divider span {
     position: relative;
-    background-color: var(--white);
+    background-color: var(--card-bg);
     padding: 0 10px;
     color: var(--text-light);
     font-size: 14px;
@@ -163,7 +164,7 @@
 
 .verification-code button {
     white-space: nowrap;
-    background-color: var(--bg-color);
+    background-color: var(--card-bg);
     color: var(--text-color);
     border-radius: var(--radius);
     padding: 0 15px;
@@ -227,7 +228,7 @@
 }
 
 .interest-tag {
-    background-color: var(--bg-color);
+    background-color: var(--card-bg);
     border-radius: 20px;
     padding: 5px 12px;
     font-size: 14px;

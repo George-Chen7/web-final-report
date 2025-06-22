@@ -2,7 +2,7 @@
 
 .main {
     padding: 40px 0;
-    background-color: var(--bg-color);
+    background-color: var(--page-bg);
     min-height: 80vh;
 }
 
@@ -78,7 +78,7 @@ h2 {
 .user-table {
     width: 100%;
     border-collapse: collapse;
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     overflow: hidden;
@@ -91,7 +91,7 @@ h2 {
 }
 
 .user-table th {
-    background-color: var(--bg-color);
+    background-color: var(--card-bg);
     font-weight: 600;
     color: var(--text-color);
 }

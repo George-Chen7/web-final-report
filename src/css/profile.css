@@ -3,12 +3,12 @@
 /* 主要内容区 */
 .main {
     padding: 30px 0;
-    background-color: var(--bg-color);
+    background-color: var(--page-bg);
 }
 
 /* 个人资料容器 */
 .profile-container {
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     overflow: hidden;
@@ -708,7 +708,7 @@
 }
 
 .modal-content {
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border-radius: var(--radius);
     width: 100%;
     max-width: 600px;
@@ -764,7 +764,7 @@
     padding: 10px 12px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
-    background-color: var(--white);
+    background-color: var(--card-bg);
     transition: var(--transition);
 }
 
@@ -1016,7 +1016,7 @@
 }
 
 .user-item:hover {
-    background-color: var(--bg-color);
+    background-color: var(--card-bg);
 }
 
 .user-item:last-child {
@@ -1116,7 +1116,7 @@
     align-items: center;
     padding: 15px;
     border-radius: var(--radius);
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     transition: var(--transition);
     cursor: pointer;
@@ -1125,7 +1125,7 @@
 }
 
 .following-item:hover {
-    background-color: var(--bg-hover);
+    background-color: var(--card-bg);
     transform: translateY(-2px);
     box-shadow: var(--shadow);
     border-color: var(--primary-color);

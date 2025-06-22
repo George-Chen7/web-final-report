@@ -3,6 +3,7 @@
 /* 主要内容区 */
 .main {
     padding: 30px 0;
+    background-color: var(--page-bg);
 }
 
 .main .container {
@@ -15,7 +16,7 @@
 .content-tabs {
     grid-column: 1 / -1;
     display: flex;
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     overflow: hidden;
@@ -44,7 +45,7 @@
 /* 发布动态模块 */
 .create-post-module {
     grid-column: 1;
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 20px;
@@ -97,7 +98,7 @@
 }
 
 .create-post-module .post-actions button:hover {
-    background-color: var(--bg-color);
+    background-color: var(--card-bg);
 }
 
 .create-post-module .post-actions button i {
@@ -123,7 +124,7 @@
 .guest-card,
 .hot-topics,
 .recommended-users {
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 20px;
@@ -268,11 +269,12 @@
 }
 
 .post-item {
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    padding: 15px;
+    padding: 20px;
     margin-bottom: 20px;
+    transition: var(--transition);
 }
 
 .post-header {
@@ -312,7 +314,7 @@
     border-radius: 12px;
     font-size: 11px;
     margin-left: 8px;
-    background-color: var(--bg-color);
+    background-color: var(--card-bg);
     color: var(--text-light);
 }
 
@@ -490,7 +492,7 @@
 
 .comment-content {
     flex: 1;
-    background-color: var(--bg-color);
+    background-color: var(--card-bg);
     border-radius: var(--radius);
     padding: 10px;
 }

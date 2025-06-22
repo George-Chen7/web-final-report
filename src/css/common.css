@@ -1,6 +1,6 @@
 /* 通用样式 */
 :root {
-    /* 主题色 - Pantone 208C (CMYK: 10/97/37/43) */
+    /* 亮色主题变量 */
     --primary-color: #9e1b45;
     --primary-light: #c04b6f;
     --primary-dark: #7a1535;
@@ -18,6 +18,37 @@
     --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     --radius: 8px;
     --transition: all 0.3s ease;
+    
+    /* 页面背景色 */
+    --page-bg: #ffffff;
+    --card-bg: #ffffff;
+    --header-bg: #ffffff;
+    --footer-bg: #f8f9fa;
+}
+
+/* 暗色主题变量 */
+[data-theme="dark"] {
+    --primary-color: #ff6b9d;
+    --primary-light: #ff8db3;
+    --primary-dark: #e55a8a;
+    --secondary-color: #2d1b2d;
+    --text-color: #ffffff;
+    --text-light: #cccccc;
+    --text-lighter: #999999;
+    --bg-color: #1a1a1a;
+    --border-color: #404040;
+    --success-color: #66bb6a;
+    --warning-color: #ffb74d;
+    --error-color: #ef5350;
+    --white: #2d2d2d;
+    --black: #ffffff;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    
+    /* 页面背景色 */
+    --page-bg: #121212;
+    --card-bg: #1e1e1e;
+    --header-bg: #1e1e1e;
+    --footer-bg: #1a1a1a;
 }
 
 /* 容器 */
@@ -120,7 +151,7 @@ textarea:focus {
 
 /* 头部导航 */
 .header {
-    background-color: var(--white);
+    background-color: var(--header-bg);
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
@@ -185,6 +216,31 @@ textarea:focus {
     align-items: center;
 }
 
+/* 主题切换按钮样式 */
+.theme-toggle {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    margin-right: 15px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle:hover {
+    background-color: var(--card-bg);
+    color: var(--primary-color);
+}
+
+.theme-toggle i {
+    transition: var(--transition);
+}
+
 .search-box {
     position: relative;
     margin-right: 20px;
@@ -195,7 +251,7 @@ textarea:focus {
     padding: 8px 12px;
     padding-right: 40px;
     border-radius: 20px;
-    background-color: var(--bg-color);
+    background-color: var(--card-bg);
     border: none;
 }
 
@@ -265,7 +321,7 @@ textarea:focus {
     top: 45px;
     right: 0;
     width: 150px;
-    background-color: var(--white);
+    background-color: var(--card-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 10px 0;
@@ -330,9 +386,9 @@ textarea:focus {
 
 /* 底部信息 */
 .footer {
-    background-color: var(--white);
+    background-color: var(--footer-bg);
     padding: 40px 0 20px;
-    margin-top: 50px;
+    margin-top: 60px;
 }
 
 .footer-content {
@@ -532,4 +588,11 @@ textarea:focus {
 
 .toast-info {
     background-color: var(--primary-color);
+}
+
+/* 页面背景色 */
+body {
+    background-color: var(--page-bg);
+    color: var(--text-color);
+    transition: var(--transition);
 }
