@@ -2,10 +2,11 @@
   {
     "username": "admin",
     "studentId": "1111111111",
-    "nickname": "admin",
+    "nickname": "管理员",
     "password": "88888888",
     "interestTags": [],
-    "avatar": "",
-    "id": 1
+    "avatar": "src/images/DefaultAvatar.png",
+    "id": 1750516625142,
+    "role": "admin"
   }
 ] 

@@ -259,16 +259,23 @@ function createPostHTML(post) {
     let commentsHTML = '';
     if (post.comments && post.comments.length > 0) {
         post.comments.forEach(comment => {
+            // 兼容两种数据结构
+            const commentUser = comment.user || {
+                name: comment.nickname || comment.username,
+                avatar: comment.avatar
+            };
+            const commentTime = comment.time || comment.publishTime;
+            
             commentsHTML += `
                 <div class="comment-item">
-                    <img src="${comment.user.avatar}" alt="用户头像">
+                    <img src="${commentUser.avatar}" alt="用户头像">
                     <div class="comment-content">
-                        <h4>${comment.user.name}</h4>
+                        <h4>${commentUser.name}</h4>
                         <p>${comment.content}</p>
                         <div class="comment-actions">
-                            <span>${formatTime(comment.time)}</span>
-                            <button>回复</button>
-                            <button><i class="bi bi-heart"></i> ${comment.likes}</button>
+                            <span>${formatTime(commentTime)}</span>
+                            <button class="btn-reply">回复</button>
+                            <button class="btn-like-comment"><i class="bi bi-heart"></i> ${comment.likes || 0}</button>
                         </div>
                     </div>
                 </div>
@@ -330,31 +337,46 @@ function initPostsLoading() {
  * @returns {string} 评论区HTML字符串
  */
 function createCommentsHTML(post) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     let commentsHTML = '';
+    
     if (post.comments && post.comments.length > 0) {
         post.comments.forEach(comment => {
+            // 兼容两种数据结构
+            const commentUser = comment.user || {
+                name: comment.nickname || comment.username,
+                avatar: comment.avatar
+            };
+            const commentTime = comment.time || comment.publishTime;
+            
             commentsHTML += `
                 <div class="comment-item">
-                    <img src="${comment.user.avatar}" alt="用户头像">
+                    <img src="${commentUser.avatar}" alt="用户头像">
                     <div class="comment-content">
-                        <h4>${comment.user.name}</h4>
+                        <h4>${commentUser.name}</h4>
                         <p>${comment.content}</p>
                         <div class="comment-actions">
-                            <span>${formatTime(comment.time)}</span>
-                            <button>回复</button>
-                            <button><i class="bi bi-heart"></i> ${comment.likes}</button>
+                            <span>${formatTime(commentTime)}</span>
+                            <button class="btn-reply">回复</button>
+                            <button class="btn-like-comment"><i class="bi bi-heart"></i> ${comment.likes || 0}</button>
                         </div>
                     </div>
                 </div>
             `;
         });
     }
-    // 评论输入区
+    
+    // 评论输入区 - 根据用户状态设置初始状态
+    const isLoggedIn = currentUser && currentUser.role !== 'guest';
+    const inputDisabled = !isLoggedIn;
+    const inputPlaceholder = isLoggedIn ? '添加评论...' : '请先登录后评论...';
+    const btnDisabled = !isLoggedIn;
+    
     commentsHTML += `
         <div class="comment-input">
             <img src="src/images/DefaultAvatar.png" alt="用户头像">
-            <input type="text" placeholder="添加评论..." disabled>
-            <button class="btn-comment" disabled>发送</button>
+            <input type="text" placeholder="${inputPlaceholder}" ${inputDisabled ? 'disabled' : ''}>
+            <button class="btn-send-comment" ${btnDisabled ? 'disabled' : ''}>发送</button>
         </div>
     `;
     return commentsHTML;
@@ -444,6 +466,7 @@ function initPostInteractions() {
             const commentsSection = postItem.querySelector('.post-comments');
             // 获取动态id
             const postId = postItem.getAttribute('data-post-id');
+            
             // 展开/收起逻辑
             if (!commentsSection.classList.contains('show')) {
                 // 展开，渲染评论内容
@@ -451,16 +474,34 @@ function initPostInteractions() {
                 const post = posts.find(p => String(p.id) === String(postId));
                 commentsSection.innerHTML = createCommentsHTML(post);
                 commentsSection.classList.add('show');
-                // 评论输入区可用性根据用户权限调整
-                if (currentUser && (currentUser.role === 'user' || currentUser.role === 'admin')) {
-                    const input = commentsSection.querySelector('input');
-                    const btn = commentsSection.querySelector('.btn-comment');
+                
+                // 立即启用评论输入区（如果用户已登录）
+                const input = commentsSection.querySelector('input');
+                const btn = commentsSection.querySelector('.btn-send-comment');
+                
+                if (currentUser && currentUser.role !== 'guest') {
+                    // 登录用户，启用输入框和发送按钮
                     if (input) {
                         input.disabled = false;
                         input.placeholder = '添加评论...';
+                        input.focus(); // 自动聚焦到输入框
                     }
-                    if (btn) btn.disabled = false;
+                    if (btn) {
+                        btn.disabled = false;
+                    }
+                } else {
+                    // 游客或未登录用户，保持禁用状态
+                    if (input) {
+                        input.disabled = true;
+                        input.placeholder = '请先登录后评论...';
+                    }
+                    if (btn) {
+                        btn.disabled = true;
+                    }
                 }
+                
+                // 绑定评论发送事件
+                bindCommentEvents(postId);
             } else {
                 // 收起，清空内容
                 commentsSection.classList.remove('show');
@@ -498,6 +539,160 @@ function initPostInteractions() {
             // ... 这里可加收藏逻辑 ...
         });
     });
+}
+
+/**
+ * 绑定评论相关事件
+ * @param {string} postId - 动态ID
+ */
+function bindCommentEvents(postId) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    // 发送评论按钮
+    const sendCommentBtn = document.querySelector(`[data-post-id="${postId}"] .btn-send-comment`);
+    const commentInput = document.querySelector(`[data-post-id="${postId}"] .comment-input input`);
+    
+    if (sendCommentBtn && commentInput) {
+        // 发送评论事件
+        sendCommentBtn.addEventListener('click', function() {
+            sendComment(postId, commentInput.value);
+        });
+        
+        // 回车发送评论
+        commentInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendComment(postId, this.value);
+            }
+        });
+        
+        // 输入时启用/禁用发送按钮
+        commentInput.addEventListener('input', function() {
+            sendCommentBtn.disabled = !this.value.trim();
+        });
+    }
+    
+    // 评论点赞按钮
+    const commentLikeButtons = document.querySelectorAll(`[data-post-id="${postId}"] .btn-like-comment`);
+    commentLikeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            if (currentUser && currentUser.role === 'guest') {
+                alert('请先登录后才能点赞评论');
+                return;
+            }
+            // 评论点赞逻辑
+            this.classList.toggle('active');
+            const icon = this.querySelector('i');
+            const likeText = this.textContent.trim();
+            const likeCount = parseInt(likeText.match(/\d+/)[0]);
+            
+            if (this.classList.contains('active')) {
+                this.innerHTML = `<i class="bi bi-heart-fill"></i> ${likeCount + 1}`;
+            } else {
+                this.innerHTML = `<i class="bi bi-heart"></i> ${likeCount - 1}`;
+            }
+        });
+    });
+    
+    // 回复按钮
+    const replyButtons = document.querySelectorAll(`[data-post-id="${postId}"] .btn-reply`);
+    replyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            if (currentUser && currentUser.role === 'guest') {
+                alert('请先登录后才能回复评论');
+                return;
+            }
+            // 回复功能可以后续扩展
+            alert('回复功能开发中...');
+        });
+    });
+}
+
+/**
+ * 发送评论
+ * @param {string} postId - 动态ID
+ * @param {string} content - 评论内容
+ */
+function sendComment(postId, content) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    if (!content.trim()) {
+        alert('请输入评论内容');
+        return;
+    }
+    
+    if (!currentUser || currentUser.role === 'guest') {
+        alert('请先登录后才能发送评论');
+        return;
+    }
+    
+    // 创建新评论对象
+    const newComment = {
+        id: Date.now(), // 使用时间戳作为评论ID
+        userId: currentUser.id,
+        username: currentUser.username,
+        nickname: currentUser.nickname || currentUser.username,
+        avatar: currentUser.avatar || 'src/images/DefaultAvatar.png',
+        content: content.trim(),
+        publishTime: new Date().toISOString(),
+        likes: 0
+    };
+    
+    // 获取所有动态数据
+    let posts = JSON.parse(localStorage.getItem('postList') || '[]');
+    
+    // 找到对应的动态
+    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
+    
+    if (postIndex !== -1) {
+        // 确保comments数组存在
+        if (!posts[postIndex].comments) {
+            posts[postIndex].comments = [];
+        }
+        
+        // 添加新评论
+        posts[postIndex].comments.push(newComment);
+        
+        // 更新localStorage
+        localStorage.setItem('postList', JSON.stringify(posts));
+        
+        // 更新页面显示
+        updatePostComments(postId, posts[postIndex].comments);
+        
+        // 清空输入框
+        const commentInput = document.querySelector(`[data-post-id="${postId}"] .comment-input input`);
+        if (commentInput) {
+            commentInput.value = '';
+            commentInput.dispatchEvent(new Event('input')); // 触发input事件以更新发送按钮状态
+        }
+        
+        // 更新评论数量
+        const commentCountSpan = document.querySelector(`[data-post-id="${postId}"] .btn-comment span`);
+        if (commentCountSpan) {
+            commentCountSpan.textContent = posts[postIndex].comments.length;
+        }
+        
+        alert('评论发送成功！');
+    } else {
+        alert('发送失败，动态不存在！');
+    }
+}
+
+/**
+ * 更新动态评论显示
+ * @param {string} postId - 动态ID
+ * @param {Array} comments - 评论数组
+ */
+function updatePostComments(postId, comments) {
+    const commentsSection = document.querySelector(`[data-post-id="${postId}"] .post-comments`);
+    if (commentsSection) {
+        // 重新渲染评论区域
+        const post = { comments: comments };
+        commentsSection.innerHTML = createCommentsHTML(post);
+        
+        // 重新绑定评论事件
+        bindCommentEvents(postId);
+    }
 }
 
 /**

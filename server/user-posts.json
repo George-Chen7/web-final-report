@@ -8,7 +8,7 @@
         "nickname": "管理员",
         "avatar": "src/images/DefaultAvatar.png",
         "content": "今天参加了校园歌手大赛，感觉很棒！#校园活动 #音乐",
-        "images": ["src/images/post-1.jpg", "src/images/post-2.jpg"],
+        "images": ["src/images/SZU1.jpg", "src/images/SZU2.jpg"],
         "publishTime": "2023-11-15T14:30:00.000Z",
         "likes": 42,
         "comments": [
@@ -43,7 +43,7 @@
         "nickname": "管理员",
         "avatar": "src/images/DefaultAvatar.png",
         "content": "图书馆的学习氛围真好，期末复习加油！#学习 #期末",
-        "images": ["src/images/post-3.jpg"],
+        "images": ["src/images/note.jpg"],
         "publishTime": "2023-11-10T09:15:00.000Z",
         "likes": 18,
         "comments": [
@@ -68,7 +68,7 @@
         "nickname": "管理员",
         "avatar": "src/images/DefaultAvatar.png",
         "content": "和朋友一起参加了志愿者活动，帮助社区清理环境，感觉很有意义！#志愿者 #环保",
-        "images": [],
+        "images": ["src/images/poster.jpg"],
         "publishTime": "2023-11-05T16:45:00.000Z",
         "likes": 36,
         "comments": [

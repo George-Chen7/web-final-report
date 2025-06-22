@@ -349,9 +349,22 @@
 .comment-actions button {
     margin-right: 10px;
     color: var(--text-lighter);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    transition: var(--transition);
 }
 
 .comment-actions button:hover {
+    color: var(--primary-color);
+}
+
+.comment-actions button.active {
+    color: var(--primary-color);
+}
+
+.comment-actions button.active i {
     color: var(--primary-color);
 }
 
@@ -370,23 +383,39 @@
 
 .comment-input input {
     flex: 1;
-    padding: 6px 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
     margin-right: 8px;
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.comment-input input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
 }
 
 .comment-input button {
-    padding: 6px 16px;
+    padding: 8px 16px;
     border: none;
-    background: #4caf50;
-    color: #fff;
-    border-radius: 4px;
+    background: var(--primary-color);
+    color: var(--white);
+    border-radius: var(--radius);
     cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.comment-input button:hover:not(:disabled) {
+    background: var(--primary-dark);
 }
 
 .comment-input button:disabled {
-    background: #ccc;
+    background: var(--border-color);
+    color: var(--text-lighter);
     cursor: not-allowed;
 }
 

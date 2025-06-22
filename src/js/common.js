@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         // 发送评论按钮（评论输入区的发送按钮）
-        document.querySelectorAll('.btn-comment').forEach(btn => {
+        document.querySelectorAll('.btn-send-comment').forEach(btn => {
             // 只为评论输入区的发送按钮绑定（排除动态区的评论按钮）
             if (btn.closest('.comment-input')) {
                 btn.addEventListener('click', function(e) {
@@ -214,22 +214,26 @@ function updateUIForLoggedInUser(user) {
     
     // 启用评论输入
     const commentInputs = document.querySelectorAll('.comment-input input');
-    const commentButtons = document.querySelectorAll('.btn-comment');
+    const commentSendButtons = document.querySelectorAll('.btn-send-comment');
     if (user.role === 'user' || user.role === 'admin') {
         commentInputs.forEach(input => {
             input.disabled = false;
             input.placeholder = '添加评论...';
         });
-        commentButtons.forEach(button => {
-            button.disabled = false;
+        commentSendButtons.forEach(button => {
+            if (button.closest('.comment-input')) {
+                button.disabled = false;
+            }
         });
     } else {
         commentInputs.forEach(input => {
             input.disabled = true;
             input.placeholder = '登录后才能评论';
         });
-        commentButtons.forEach(button => {
-            button.disabled = true;
+        commentSendButtons.forEach(button => {
+            if (button.closest('.comment-input')) {
+                button.disabled = true;
+            }
         });
     }
     
@@ -267,13 +271,15 @@ function updateUIForGuest() {
     
     // 禁用评论输入
     const commentInputs = document.querySelectorAll('.comment-input input');
-    const commentButtons = document.querySelectorAll('.btn-comment');
+    const commentSendButtons = document.querySelectorAll('.btn-send-comment');
     commentInputs.forEach(input => {
         input.disabled = true;
         input.placeholder = '登录后才能评论';
     });
-    commentButtons.forEach(button => {
-        button.disabled = true;
+    commentSendButtons.forEach(button => {
+        if (button.closest('.comment-input')) {
+            button.disabled = true;
+        }
     });
 }
 
