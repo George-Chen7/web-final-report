@@ -23,6 +23,11 @@
                     <li><a href="admin.html" class="active">管理员后台</a></li>
                 </ul>
             </nav>
+            <div class="admin-actions">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </button>
+            </div>
         </div>
     </header>
 
@@ -35,13 +40,14 @@
             </div>
             <!-- 搜索栏 -->
             <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="搜索学号或昵称...">
+                <input type="text" id="searchInput" placeholder="搜索用户名、学号或昵称...">
                 <button id="searchBtn"><i class="bi bi-search"></i> 搜索</button>
             </div>
             <!-- 用户列表表格 -->
             <table class="user-table">
                 <thead>
                     <tr>
+                        <th>用户名</th>
                         <th>学号</th>
                         <th>昵称</th>
                         <th>状态</th>

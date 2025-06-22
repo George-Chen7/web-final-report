@@ -68,6 +68,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
+    // 检查用户是否被封禁
+    if (currentUser.banned) {
+        alert('您的账号已被封禁，无法使用系统功能。');
+        localStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+        return;
+    }
+    
     // 获取clickUser（从URL参数或localStorage）
     let clickUser = null;
     const urlParams = new URLSearchParams(window.location.search);

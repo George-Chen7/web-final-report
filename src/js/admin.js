@@ -5,40 +5,53 @@
 // 4. 详细中文注释
 
 // 检查当前登录用户是否为管理员
-const currentUser = JSON.parse(localStorage.getItem('userInfo'));
-if (!currentUser || currentUser.studentId !== 'admin') {
+const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+if (!currentUser || currentUser.username !== 'admin') {
     alert('无权限访问，需管理员账号登录！');
     window.location.href = 'index.html';
 }
+
+// 退出登录功能
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    if (confirm('确定要退出登录吗？')) {
+        // 清除当前用户信息
+        localStorage.removeItem('currentUser');
+        // 跳转到首页
+        window.location.href = 'index.html';
+    }
+});
 
 // 获取用户数据（模拟，实际应从后端获取）
 function getUserList() {
     let users = JSON.parse(localStorage.getItem('userList')) || [];
     // 管理员账号不显示在列表中
-    return users.filter(u => u.studentId !== 'admin');
+    return users.filter(u => u.username !== 'admin');
 }
 
 // 渲染用户列表
 function renderUserTable(filter = '') {
     const tbody = document.getElementById('userTableBody');
     const users = getUserList().filter(user =>
-        user.studentId.includes(filter) || (user.nickname && user.nickname.includes(filter))
+        user.username.includes(filter) || 
+        (user.studentId && user.studentId.includes(filter)) ||
+        (user.nickname && user.nickname.includes(filter))
     );
     tbody.innerHTML = '';
     if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4">暂无用户</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5">暂无用户</td></tr>';
         return;
     }
     users.forEach(user => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${user.studentId}</td>
+            <td>${user.username}</td>
+            <td>${user.studentId || '未设置'}</td>
             <td>${user.nickname || ''}</td>
             <td>${user.banned ? '<span class="banned">已封禁</span>' : '正常'}</td>
             <td>
-                <button class="btn-action" onclick="toggleBanUser('${user.studentId}')">${user.banned ? '解封' : '封禁'}</button>
-                <button class="btn-action" onclick="resetUser('${user.studentId}')">重置资料</button>
-                <button class="btn-action" onclick="deleteUser('${user.studentId}')">删除</button>
+                <button class="btn-action" onclick="toggleBanUser('${user.username}')">${user.banned ? '解封' : '封禁'}</button>
+                <button class="btn-action" onclick="resetUser('${user.username}')">重置资料</button>
+                <button class="btn-action" onclick="deleteUser('${user.username}')">删除</button>
             </td>
         `;
         tbody.appendChild(tr);
@@ -46,10 +59,10 @@ function renderUserTable(filter = '') {
 }
 
 // 封禁/解封用户
-function toggleBanUser(studentId) {
+function toggleBanUser(username) {
     let users = JSON.parse(localStorage.getItem('userList')) || [];
     users = users.map(u => {
-        if (u.studentId === studentId) {
+        if (u.username === username) {
             u.banned = !u.banned;
         }
         return u;
@@ -60,10 +73,10 @@ function toggleBanUser(studentId) {
 }
 
 // 重置用户资料
-function resetUser(studentId) {
+function resetUser(username) {
     let users = JSON.parse(localStorage.getItem('userList')) || [];
     users = users.map(u => {
-        if (u.studentId === studentId) {
+        if (u.username === username) {
             u.nickname = '';
             u.avatar = '';
             u.bio = '';
@@ -77,10 +90,10 @@ function resetUser(studentId) {
 }
 
 // 删除用户
-function deleteUser(studentId) {
+function deleteUser(username) {
     if (!confirm('确定要删除该用户吗？')) return;
     let users = JSON.parse(localStorage.getItem('userList')) || [];
-    users = users.filter(u => u.studentId !== studentId);
+    users = users.filter(u => u.username !== username);
     localStorage.setItem('userList', JSON.stringify(users));
     showAdminMessage('用户已删除！');
     renderUserTable(document.getElementById('searchInput').value);

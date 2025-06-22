@@ -128,9 +128,24 @@ function checkLoginStatus() {
     
     if (userInfo) {
         user = JSON.parse(userInfo);
+        
+        // 检查用户是否被封禁
+        if (user.banned) {
+            alert('您的账号已被封禁，无法使用系统功能。');
+            localStorage.removeItem('currentUser');
+            user = { role: 'guest' };
+            updateUIForGuest();
+            return;
+        }
+        
         // 判断管理员和预设用户
         if (user.username === 'admin') {
             user.role = 'admin';
+            // 检查当前页面，如果不是admin.html，则跳转
+            if (!window.location.pathname.includes('admin.html')) {
+                window.location.href = 'admin.html';
+                return; // 跳转后不再执行后续代码
+            }
         } else if (['study_master', 'photo_lover', 'campus_singer'].includes(user.username)) {
             // 预设用户，自动初始化角色
             user.role = 'user';

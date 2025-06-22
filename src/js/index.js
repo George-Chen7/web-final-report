@@ -8,8 +8,26 @@ let postsPerPage = 5; // 每页显示的帖子数量
 let allFilteredPosts = []; // 存储所有过滤后的帖子
 let currentTabType = 'all'; // 当前标签类型
 
+// 检查用户是否被封禁
+function checkUserBanStatus() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser && currentUser.banned) {
+        alert('您的账号已被封禁，无法使用系统功能。');
+        localStorage.removeItem('currentUser');
+        // 刷新页面以应用游客状态
+        window.location.reload();
+        return false;
+    }
+    return true;
+}
+
 // DOM加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
+    // 检查用户封禁状态
+    if (!checkUserBanStatus()) {
+        return;
+    }
+    
     // 首页加载时初始化预设用户
     initPresetUsers();
     
