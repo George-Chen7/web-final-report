@@ -63,49 +63,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载用户资料
     loadUserProfile();
-    
     // 加载用户动态
     loadUserPosts();
-    
-    // 加载用户相册
-    loadUserPhotos();
-    
-    // 加载用户好友
-    loadUserFriends();
-    
     // 加载关注和粉丝列表
     loadFollowLists();
-    
-    // 标签页切换
-    const tabItems = document.querySelectorAll('.profile-tabs li');
-    const tabPanes = document.querySelectorAll('.tab-pane');
-    
-    tabItems.forEach(item => {
-        item.addEventListener('click', function() {
-            const tabId = this.getAttribute('data-tab');
-            
-            // 移除所有标签页的活动状态
-            tabItems.forEach(tab => tab.classList.remove('active'));
-            tabPanes.forEach(pane => pane.classList.remove('active'));
-            
-            // 设置当前标签页为活动状态
-            this.classList.add('active');
-            document.getElementById(`${tabId}Tab`).classList.add('active');
-        });
-    });
-    
+    // 标签页切换只保留动态tab
     // 关注列表标签页切换
     const followTabs = document.querySelectorAll('.list-tabs .tab');
     const followLists = document.querySelectorAll('.user-list');
-    
     followTabs.forEach(tab => {
         tab.addEventListener('click', function() {
             const tabType = this.getAttribute('data-tab');
-            
             // 移除所有标签的活动状态
             followTabs.forEach(t => t.classList.remove('active'));
             followLists.forEach(list => list.classList.remove('active'));
-            
             // 设置当前标签为活动状态
             this.classList.add('active');
             document.querySelector(`.${tabType}-list`).classList.add('active');
@@ -321,278 +292,39 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载用户动态
     function loadUserPosts() {
-        // 获取当前用户信息
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        
-        // 从localStorage获取用户的动态数据，如果没有则初始化默认数据
-        let userPosts = JSON.parse(localStorage.getItem(`userPosts_${currentUser.id}`));
-        
-        if (!userPosts) {
-            // 初始化默认动态数据（JSON格式）
-            userPosts = [
-                {
-                    "id": 1,
-                    "userId": currentUser.id,
-                    "username": currentUser.username,
-                    "nickname": currentUser.nickname || currentUser.username,
-                    "avatar": currentUser.avatar || "src/images/DefaultAvatar.png",
-                    "content": "今天参加了校园歌手大赛，感觉很棒！#校园活动 #音乐",
-                    "images": ["src/images/DefaultAvatar.png", "src/images/DefaultAvatar.png"],
-                    "publishTime": "2023-11-15T14:30:00.000Z",
-                    "likes": 42,
-                    "comments": [
-                        {
-                            "id": 1,
-                            "userId": 101,
-                            "username": "李四",
-                            "nickname": "李四",
-                            "avatar": "src/images/DefaultAvatar.png",
-                            "content": "太棒了！期待你的表演",
-                            "publishTime": "2023-11-15T15:00:00.000Z",
-                            "likes": 3
-                        },
-                        {
-                            "id": 2,
-                            "userId": 102,
-                            "username": "王五",
-                            "nickname": "王五",
-                            "avatar": "src/images/DefaultAvatar.png",
-                            "content": "加油！你一定可以的",
-                            "publishTime": "2023-11-15T15:30:00.000Z",
-                            "likes": 1
-                        }
-                    ],
-                    "shares": 3,
-                    "tags": ["校园活动", "音乐"]
-                },
-                {
-                    "id": 2,
-                    "userId": currentUser.id,
-                    "username": currentUser.username,
-                    "nickname": currentUser.nickname || currentUser.username,
-                    "avatar": currentUser.avatar || "src/images/DefaultAvatar.png",
-                    "content": "图书馆的学习氛围真好，期末复习加油！#学习 #期末",
-                    "images": ["src/images/DefaultAvatar.png"],
-                    "publishTime": "2023-11-10T09:15:00.000Z",
-                    "likes": 18,
-                    "comments": [
-                        {
-                            "id": 3,
-                            "userId": 103,
-                            "username": "赵六",
-                            "nickname": "赵六",
-                            "avatar": "src/images/DefaultAvatar.png",
-                            "content": "一起加油！",
-                            "publishTime": "2023-11-10T10:00:00.000Z",
-                            "likes": 2
-                        }
-                    ],
-                    "shares": 0,
-                    "tags": ["学习", "期末"]
-                },
-                {
-                    "id": 3,
-                    "userId": currentUser.id,
-                    "username": currentUser.username,
-                    "nickname": currentUser.nickname || currentUser.username,
-                    "avatar": currentUser.avatar || "src/images/DefaultAvatar.png",
-                    "content": "和朋友一起参加了志愿者活动，帮助社区清理环境，感觉很有意义！#志愿者 #环保",
-                    "images": [],
-                    "publishTime": "2023-11-05T16:45:00.000Z",
-                    "likes": 36,
-                    "comments": [
-                        {
-                            "id": 4,
-                            "userId": 104,
-                            "username": "钱七",
-                            "nickname": "钱七",
-                            "avatar": "src/images/DefaultAvatar.png",
-                            "content": "很有意义的活动，下次叫上我！",
-                            "publishTime": "2023-11-05T17:00:00.000Z",
-                            "likes": 5
-                        },
-                        {
-                            "id": 5,
-                            "userId": 105,
-                            "username": "孙八",
-                            "nickname": "孙八",
-                            "avatar": "src/images/DefaultAvatar.png",
-                            "content": "保护环境，人人有责",
-                            "publishTime": "2023-11-05T17:15:00.000Z",
-                            "likes": 3
-                        }
-                    ],
-                    "shares": 7,
-                    "tags": ["志愿者", "环保"]
-                }
-            ];
-            
-            // 保存到localStorage
-            localStorage.setItem(`userPosts_${currentUser.id}`, JSON.stringify(userPosts));
-        }
-        
+        // 获取所有动态
+        const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
+        // 只筛选当前用户发布的动态
+        const userPosts = allPosts.filter(post => post.user && (post.user.id === currentUser.id || post.user.name === currentUser.username));
         // 渲染动态列表
         userPostList.innerHTML = '';
-        
         if (userPosts.length === 0) {
             userPostList.innerHTML = '<div class="empty-state">暂无动态</div>';
-            return;
+        } else {
+            // 按时间倒序
+            userPosts.sort((a, b) => new Date(b.time) - new Date(a.time));
+            userPosts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post-item';
+                postElement.setAttribute('data-post-id', post.id);
+                postElement.innerHTML = `
+                    <div class="post-header">
+                        <div class="post-avatar">
+                            <img src="${post.user.avatar}" alt="头像">
+                        </div>
+                        <div class="post-author">
+                            <div class="post-author-name">${post.user.nickname || post.user.name}</div>
+                            <div class="post-time">${formatTime(post.time)}</div>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                        <div class="post-text">${post.content}</div>
+                    </div>
+                `;
+                userPostList.appendChild(postElement);
+            });
         }
-        
-        // 按发布时间倒序排列（最新的在前）
-        userPosts.sort((a, b) => new Date(b.publishTime) - new Date(a.publishTime));
-        
-        userPosts.forEach(post => {
-            const postElement = document.createElement('div');
-            postElement.className = 'post-item';
-            postElement.setAttribute('data-post-id', post.id);
-            
-            // 构建图片HTML
-            let imagesHTML = '';
-            if (post.images && post.images.length > 0) {
-                imagesHTML = '<div class="post-images">';
-                post.images.forEach(image => {
-                    imagesHTML += `
-                        <div class="post-image">
-                            <img src="${image}" alt="动态图片">
-                        </div>
-                    `;
-                });
-                imagesHTML += '</div>';
-            }
-            
-            // 构建评论HTML
-            let commentsHTML = '';
-            if (post.comments && post.comments.length > 0) {
-                commentsHTML = '<div class="post-comments">';
-                post.comments.forEach(comment => {
-                    commentsHTML += `
-                        <div class="comment-item">
-                            <img src="${comment.avatar}" alt="头像" class="comment-avatar">
-                            <div class="comment-content">
-                                <div class="comment-author">${comment.nickname}</div>
-                                <div class="comment-text">${comment.content}</div>
-                                <div class="comment-time">${formatTime(comment.publishTime)}</div>
-                            </div>
-                        </div>
-                    `;
-                });
-                commentsHTML += '</div>';
-            }
-            
-            // 构建标签HTML
-            let tagsHTML = '';
-            if (post.tags && post.tags.length > 0) {
-                tagsHTML = '<div class="post-tags">';
-                post.tags.forEach(tag => {
-                    tagsHTML += `<span class="post-tag">#${tag}</span>`;
-                });
-                tagsHTML += '</div>';
-            }
-            
-            // 构建动态HTML
-            postElement.innerHTML = `
-                <div class="post-header">
-                    <div class="post-avatar">
-                        <img src="${post.avatar}" alt="头像">
-                    </div>
-                    <div class="post-author">
-                        <div class="post-author-name">${post.nickname}</div>
-                        <div class="post-time">${formatTime(post.publishTime)}</div>
-                    </div>
-                    <div class="post-actions">
-                        <button class="post-menu-btn" data-post-id="${post.id}">
-                            <i class="bi bi-three-dots"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="post-content">
-                    <div class="post-text">${formatContent(post.content)}</div>
-                    ${tagsHTML}
-                    ${imagesHTML}
-                </div>
-                <div class="post-footer">
-                    <div class="post-stats">
-                        <div class="post-stat" data-type="likes">
-                            <i class="bi bi-heart"></i> 
-                            <span class="like-count">${post.likes}</span>
-                        </div>
-                        <div class="post-stat" data-type="comments">
-                            <i class="bi bi-chat"></i> 
-                            <span class="comment-count">${post.comments.length}</span>
-                        </div>
-                        <div class="post-stat" data-type="shares">
-                            <i class="bi bi-share"></i> 
-                            <span class="share-count">${post.shares}</span>
-                        </div>
-                    </div>
-                    <div class="post-interactions">
-                        <div class="post-interaction" data-action="like" data-post-id="${post.id}">
-                            <i class="bi bi-heart"></i> 点赞
-                        </div>
-                        <div class="post-interaction" data-action="comment" data-post-id="${post.id}">
-                            <i class="bi bi-chat"></i> 评论
-                        </div>
-                        <div class="post-interaction" data-action="share" data-post-id="${post.id}">
-                            <i class="bi bi-share"></i> 分享
-                        </div>
-                    </div>
-                </div>
-                ${commentsHTML}
-            `;
-            
-            // 添加交互事件
-            const likeBtn = postElement.querySelector('.post-interaction[data-action="like"]');
-            likeBtn.addEventListener('click', function() {
-                const postId = this.getAttribute('data-post-id');
-                const likeCountElement = postElement.querySelector('.like-count');
-                const currentLikes = parseInt(likeCountElement.textContent);
-                
-                this.classList.toggle('active');
-                
-                if (this.classList.contains('active')) {
-                    likeCountElement.textContent = currentLikes + 1;
-                    this.innerHTML = `<i class="bi bi-heart-fill"></i> 已点赞`;
-                    
-                    // 更新localStorage中的数据
-                    const postIndex = userPosts.findIndex(p => p.id == postId);
-                    if (postIndex !== -1) {
-                        userPosts[postIndex].likes += 1;
-                        localStorage.setItem(`userPosts_${currentUser.id}`, JSON.stringify(userPosts));
-                    }
-                } else {
-                    likeCountElement.textContent = currentLikes - 1;
-                    this.innerHTML = `<i class="bi bi-heart"></i> 点赞`;
-                    
-                    // 更新localStorage中的数据
-                    const postIndex = userPosts.findIndex(p => p.id == postId);
-                    if (postIndex !== -1) {
-                        userPosts[postIndex].likes -= 1;
-                        localStorage.setItem(`userPosts_${currentUser.id}`, JSON.stringify(userPosts));
-                    }
-                }
-            });
-            
-            // 评论按钮事件
-            const commentBtn = postElement.querySelector('.post-interaction[data-action="comment"]');
-            commentBtn.addEventListener('click', function() {
-                const postId = this.getAttribute('data-post-id');
-                // 这里可以添加评论功能
-                alert('评论功能开发中...');
-            });
-            
-            // 分享按钮事件
-            const shareBtn = postElement.querySelector('.post-interaction[data-action="share"]');
-            shareBtn.addEventListener('click', function() {
-                const postId = this.getAttribute('data-post-id');
-                // 这里可以添加分享功能
-                alert('分享功能开发中...');
-            });
-            
-            userPostList.appendChild(postElement);
-        });
-        
-        // 更新动态数量统计
+        // 同步动态数量
         postCount.textContent = userPosts.length;
     }
     
@@ -722,219 +454,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载关注和粉丝列表
     function loadFollowLists() {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser) return;
-        
-        // 获取所有用户数据
         const userList = JSON.parse(localStorage.getItem('userList') || '[]');
-        
-        // 加载关注列表
-        loadFollowingList(currentUser, userList);
-        
-        // 加载粉丝列表
-        loadFollowersList(currentUser, userList);
-        
-        // 更新关注和粉丝数量
-        updateFollowCounts(currentUser, userList);
-    }
-    
-    // 加载关注列表
-    function loadFollowingList(currentUser, userList) {
-        const followingList = document.querySelector('.following-list');
-        if (!followingList) return;
-        
-        const following = currentUser.following || [];
-        
-        if (following.length === 0) {
-            followingList.innerHTML = '<div class="empty-state">还没有关注任何人</div>';
-            return;
-        }
-        
-        let followingHTML = '';
-        following.forEach(userId => {
-            const user = userList.find(u => String(u.id) === String(userId));
-            if (user) {
-                followingHTML += `
-                    <div class="user-item">
-                        <div class="user-avatar">
-                            <img src="${user.avatar || 'src/images/DefaultAvatar.png'}" alt="${user.nickname || user.username}">
-                        </div>
-                        <div class="user-info">
-                            <h4>${user.nickname || user.username}</h4>
-                            <p>${user.studentId || ''}</p>
-                        </div>
-                        <div class="user-actions">
-                            <button class="btn btn-outline btn-unfollow" data-user-id="${user.id}">取消关注</button>
-                        </div>
-                    </div>
-                `;
-            }
-        });
-        
-        followingList.innerHTML = followingHTML;
-        
-        // 绑定取消关注事件
-        bindUnfollowEvents();
-    }
-    
-    // 加载粉丝列表
-    function loadFollowersList(currentUser, userList) {
-        const followersList = document.querySelector('.followers-list');
-        if (!followersList) return;
-        
-        // 查找所有关注了当前用户的用户
-        const followers = userList.filter(user => 
-            user.followers && user.followers.includes(currentUser.id)
-        );
-        
-        if (followers.length === 0) {
-            followersList.innerHTML = '<div class="empty-state">还没有粉丝</div>';
-            return;
-        }
-        
-        let followersHTML = '';
-        followers.forEach(user => {
-            const isFollowing = currentUser.following && currentUser.following.includes(user.id);
-            followersHTML += `
-                <div class="user-item">
-                    <div class="user-avatar">
-                        <img src="${user.avatar || 'src/images/DefaultAvatar.png'}" alt="${user.nickname || user.username}">
-                    </div>
-                    <div class="user-info">
-                        <h4>${user.nickname || user.username}</h4>
-                        <p>${user.studentId || ''}</p>
-                    </div>
-                    <div class="user-actions">
-                        ${isFollowing ? 
-                            '<button class="btn btn-outline btn-unfollow" data-user-id="' + user.id + '">取消关注</button>' :
-                            '<button class="btn btn-primary btn-follow" data-user-id="' + user.id + '">关注</button>'
-                        }
-                    </div>
-                </div>
-            `;
-        });
-        
-        followersList.innerHTML = followersHTML;
-        
-        // 绑定关注/取消关注事件
-        bindFollowEvents();
-    }
-    
-    // 更新关注和粉丝数量
-    function updateFollowCounts(currentUser, userList) {
-        const followingCount = currentUser.following ? currentUser.following.length : 0;
-        const followersCount = userList.filter(user => 
-            user.followers && user.followers.includes(currentUser.id)
-        ).length;
-        
-        // 更新页面上的数量显示
-        const followingElements = document.querySelectorAll('.following-count');
-        const followersElements = document.querySelectorAll('.followers-count');
-        
-        followingElements.forEach(el => el.textContent = followingCount);
-        followersElements.forEach(el => el.textContent = followersCount);
-    }
-    
-    // 绑定取消关注事件
-    function bindUnfollowEvents() {
-        const unfollowButtons = document.querySelectorAll('.btn-unfollow');
-        unfollowButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const userId = this.getAttribute('data-user-id');
-                unfollowUser(userId);
-            });
-        });
-    }
-    
-    // 绑定关注事件
-    function bindFollowEvents() {
-        const followButtons = document.querySelectorAll('.btn-follow');
-        followButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const userId = this.getAttribute('data-user-id');
-                followUser(userId);
-            });
-        });
-    }
-    
-    // 取消关注用户
-    function unfollowUser(userId) {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser) return;
-        
-        let userList = JSON.parse(localStorage.getItem('userList') || '[]');
-        
-        // 找到当前用户和目标用户
-        const currentUserIndex = userList.findIndex(user => String(user.id) === String(currentUser.id));
-        const targetUserIndex = userList.findIndex(user => String(user.id) === String(userId));
-        
-        if (currentUserIndex === -1 || targetUserIndex === -1) {
-            showMessage('用户信息不存在', 'error');
-            return;
-        }
-        
-        const currentUserData = userList[currentUserIndex];
-        const targetUserData = userList[targetUserIndex];
-        
-        // 取消关注
-        currentUserData.following = currentUserData.following.filter(id => id !== userId);
-        targetUserData.followers = targetUserData.followers.filter(id => id !== currentUser.id);
-        
-        // 更新用户列表
-        localStorage.setItem('userList', JSON.stringify(userList));
-        
-        // 更新当前用户信息
-        localStorage.setItem('currentUser', JSON.stringify(currentUserData));
-        
-        // 重新加载关注列表
-        loadFollowLists();
-        
-        showMessage('已取消关注', 'success');
-    }
-    
-    // 关注用户
-    function followUser(userId) {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser) return;
-        
-        let userList = JSON.parse(localStorage.getItem('userList') || '[]');
-        
-        // 找到当前用户和目标用户
-        const currentUserIndex = userList.findIndex(user => String(user.id) === String(currentUser.id));
-        const targetUserIndex = userList.findIndex(user => String(user.id) === String(userId));
-        
-        if (currentUserIndex === -1 || targetUserIndex === -1) {
-            showMessage('用户信息不存在', 'error');
-            return;
-        }
-        
-        const currentUserData = userList[currentUserIndex];
-        const targetUserData = userList[targetUserIndex];
-        
-        // 确保关注列表和粉丝列表存在
-        if (!currentUserData.following) currentUserData.following = [];
-        if (!targetUserData.followers) targetUserData.followers = [];
-        
-        // 添加关注
-        currentUserData.following.push(userId);
-        targetUserData.followers.push(currentUser.id);
-        
-        // 更新用户列表
-        localStorage.setItem('userList', JSON.stringify(userList));
-        
-        // 更新当前用户信息
-        localStorage.setItem('currentUser', JSON.stringify(currentUserData));
-        
-        // 重新加载关注列表
-        loadFollowLists();
-        
-        showMessage('关注成功', 'success');
-    }
-    
-    // 格式化内容（处理话题标签等）
-    function formatContent(content) {
-        // 处理话题标签 #xxx
-        return content.replace(/#([^\s#]+)/g, '<a href="topic.html?tag=$1" class="topic-tag">#$1</a>');
+        // 关注
+        const followingArr = currentUser.following || [];
+        followingCount.textContent = followingArr.length;
+        // 粉丝
+        const followersArr = userList.filter(u => u.followers && u.followers.includes(currentUser.id));
+        followerCount.textContent = followersArr.length;
     }
     
     // 格式化时间

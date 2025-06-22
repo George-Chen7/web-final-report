@@ -55,21 +55,25 @@ function initContentTabs() {
  * @param {boolean} append - 是否追加内容
  */
 function loadPosts(type = 'all', append = false) {
-    const postsContainer = document.querySelector('.posts-list');
+    const postsList = document.querySelector('.posts-list');
     
     // 如果不是追加，则重置分页状态
     if (!append) {
         currentPage = 1;
         currentTabType = type;
-        postsContainer.innerHTML = '<div class="loading">加载中...</div>';
+        postsList.innerHTML = '';
+        // 加载中提示可选加在postsList上方
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading';
+        loadingDiv.textContent = '加载中...';
+        postsList.appendChild(loadingDiv);
     }
     
-    // 模拟加载延迟
     setTimeout(() => {
         // 移除加载提示
-        const loading = postsContainer.querySelector('.loading');
+        const loading = postsList.querySelector('.loading');
         if (loading) {
-            postsContainer.removeChild(loading);
+            postsList.removeChild(loading);
         }
         
         // 获取所有过滤后的动态数据
@@ -84,18 +88,14 @@ function loadPosts(type = 'all', append = false) {
         
         // 如果没有数据
         if (allFilteredPosts.length === 0) {
-            postsContainer.innerHTML = '<div class="no-content">暂无内容</div>';
+            postsList.innerHTML = '<div class="no-content">暂无内容</div>';
             updateLoadMoreButton(false);
             return;
         }
         
         // 渲染动态
         currentPagePosts.forEach(post => {
-            if (!append) {
-                postsContainer.innerHTML += createPostHTML(post);
-            } else {
-                postsContainer.insertAdjacentHTML('beforeend', createPostHTML(post));
-            }
+            postsList.insertAdjacentHTML('beforeend', createPostHTML(post));
         });
         
         // 检查是否还有更多内容
@@ -401,7 +401,7 @@ function createPostHTML(post) {
                 <div class="post-info">
                     <h3>${post.user.nickname || post.user.name}</h3>
                     <p class="post-meta">
-                        ${post.user.department} · ${formatTime(post.time)}
+                        ${formatTime(post.time)}
                         <span class="visibility-badge" title="${visibilityText}">
                             ${visibilityIcon} ${visibilityText}
                         </span>
