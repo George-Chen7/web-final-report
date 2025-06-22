@@ -128,9 +128,12 @@ function checkLoginStatus() {
     
     if (userInfo) {
         user = JSON.parse(userInfo);
-        // 判断管理员
+        // 判断管理员和预设用户
         if (user.username === 'admin') {
             user.role = 'admin';
+        } else if (['study_master', 'photo_lover', 'campus_singer'].includes(user.username)) {
+            // 预设用户，自动初始化角色
+            user.role = 'user';
         } else if (user.username) {
             // 有用户名的用户
             user.role = 'user';
@@ -389,3 +392,74 @@ if (logoutButton) {
         logout();
     });
 }
+
+// 预设用户初始化函数，供首页和注册页调用
+function initPresetUsers() {
+    let users = JSON.parse(localStorage.getItem('userList')) || [];
+    // 管理员
+    if (!users.find(u => u.username === 'admin')) {
+        users.push({
+            username: 'admin',
+            studentId: '1111111111',
+            nickname: '管理员',
+            password: '88888888',
+            interestTags: [],
+            avatar: 'src/images/DefaultAvatar.png',
+            id: 1750516625142,
+            role: 'admin',
+            following: [],
+            followers: [],
+            banned: false
+        });
+    }
+    // 学习达人
+    if (!users.find(u => u.username === 'study_master')) {
+        users.push({
+            username: 'study_master',
+            studentId: '2021001001',
+            nickname: '学习达人',
+            password: '111111c',
+            interestTags: ['学习', '编程', '阅读'],
+            avatar: 'src/images/DefaultAvatar.png',
+            id: 1750516625143,
+            role: 'user',
+            following: [],
+            followers: [],
+            banned: false
+        });
+    }
+    // 摄影爱好者
+    if (!users.find(u => u.username === 'photo_lover')) {
+        users.push({
+            username: 'photo_lover',
+            studentId: '2021002001',
+            nickname: '摄影爱好者',
+            password: '111111c',
+            interestTags: ['摄影', '艺术', '旅行'],
+            avatar: 'src/images/DefaultAvatar.png',
+            id: 1750516625144,
+            role: 'user',
+            following: [],
+            followers: [],
+            banned: false
+        });
+    }
+    // 校园歌手
+    if (!users.find(u => u.username === 'campus_singer')) {
+        users.push({
+            username: 'campus_singer',
+            studentId: '2021003001',
+            nickname: '校园歌手',
+            password: '111111c',
+            interestTags: ['音乐', '唱歌', '表演'],
+            avatar: 'src/images/DefaultAvatar.png',
+            id: 1750516625145,
+            role: 'user',
+            following: [],
+            followers: [],
+            banned: false
+        });
+    }
+    localStorage.setItem('userList', JSON.stringify(users));
+}
+window.initPresetUsers = initPresetUsers;

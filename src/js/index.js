@@ -4,6 +4,9 @@
 
 // DOM加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
+    // 首页加载时初始化预设用户
+    initPresetUsers();
+    
     // 初始化内容切换标签
     initContentTabs();
     
@@ -97,8 +100,9 @@ function getPostsData(type) {
             {
                 id: 1,
                 user: {
-                    id: 101,
-                    name: '学习达人',
+                    id: 1750516625143,
+                    name: 'study_master',
+                    nickname: '学习达人',
                     avatar: 'src/images/DefaultAvatar.png',
                     department: '计算机学院'
                 },
@@ -110,8 +114,9 @@ function getPostsData(type) {
                     {
                         id: 201,
                         user: {
-                            id: 102,
-                            name: '摄影爱好者',
+                            id: 1750516625144,
+                            name: 'photo_lover',
+                            nickname: '摄影爱好者',
                             avatar: 'src/images/DefaultAvatar.png'
                         },
                         content: '非常实用的复习方法，谢谢分享！',
@@ -123,8 +128,9 @@ function getPostsData(type) {
             {
                 id: 2,
                 user: {
-                    id: 102,
-                    name: '摄影爱好者',
+                    id: 1750516625144,
+                    name: 'photo_lover',
+                    nickname: '摄影爱好者',
                     avatar: 'src/images/DefaultAvatar.png',
                     department: '艺术学院'
                 },
@@ -137,8 +143,9 @@ function getPostsData(type) {
             {
                 id: 3,
                 user: {
-                    id: 103,
-                    name: '校园歌手',
+                    id: 1750516625145,
+                    name: 'campus_singer',
+                    nickname: '校园歌手',
                     avatar: 'src/images/DefaultAvatar.png',
                     department: '音乐学院'
                 },
@@ -297,7 +304,7 @@ function createPostHTML(post) {
             <div class="post-header">
                 <img src="${post.user.avatar}" alt="用户头像">
                 <div class="post-info">
-                    <h3>${post.user.name}</h3>
+                    <h3>${post.user.nickname || post.user.name}</h3>
                     <p class="post-meta">${post.user.department} · ${formatTime(post.time)}</p>
                 </div>
                 ${actionButtonHTML}

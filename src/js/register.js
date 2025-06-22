@@ -5,20 +5,80 @@
 // 自动初始化 admin 账号到 localStorage
 (function initAdminAccount() {
     let users = JSON.parse(localStorage.getItem('userList')) || [];
+    
+    // 初始化管理员账号
     if (!users.find(u => u.username === 'admin')) {
         users.push({
             username: 'admin',
             studentId: '1111111111',
-            nickname: 'admin',
+            nickname: '管理员',
             password: '88888888',
             interestTags: [],
             avatar: 'src/images/DefaultAvatar.png',
-            id: Date.now(),
+            id: 1750516625142,
+            role: 'admin',
+            following: [],
+            followers: [],
             banned: false
         });
-        localStorage.setItem('userList', JSON.stringify(users));
     }
+    
+    // 初始化学习达人账号
+    if (!users.find(u => u.username === 'study_master')) {
+        users.push({
+            username: 'study_master',
+            studentId: '2021001001',
+            nickname: '学习达人',
+            password: '111111c',
+            interestTags: ['学习', '编程', '阅读'],
+            avatar: 'src/images/DefaultAvatar.png',
+            id: 1750516625143,
+            role: 'user',
+            following: [],
+            followers: [],
+            banned: false
+        });
+    }
+    
+    // 初始化摄影爱好者账号
+    if (!users.find(u => u.username === 'photo_lover')) {
+        users.push({
+            username: 'photo_lover',
+            studentId: '2021002001',
+            nickname: '摄影爱好者',
+            password: '111111c',
+            interestTags: ['摄影', '艺术', '旅行'],
+            avatar: 'src/images/DefaultAvatar.png',
+            id: 1750516625144,
+            role: 'user',
+            following: [],
+            followers: [],
+            banned: false
+        });
+    }
+    
+    // 初始化校园歌手账号
+    if (!users.find(u => u.username === 'campus_singer')) {
+        users.push({
+            username: 'campus_singer',
+            studentId: '2021003001',
+            nickname: '校园歌手',
+            password: '111111c',
+            interestTags: ['音乐', '唱歌', '表演'],
+            avatar: 'src/images/DefaultAvatar.png',
+            id: 1750516625145,
+            role: 'user',
+            following: [],
+            followers: [],
+            banned: false
+        });
+    }
+    
+    localStorage.setItem('userList', JSON.stringify(users));
 })();
+
+// 注册页面加载时初始化预设用户
+initPresetUsers();
 
 document.addEventListener('DOMContentLoaded', function() {
     // 获取表单元素
