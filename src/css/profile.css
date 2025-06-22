@@ -139,6 +139,8 @@
 .profile-actions {
     margin-left: auto;
     align-self: flex-start;
+    position: relative;
+    z-index: 10;
 }
 
 /* 个人资料内容 */

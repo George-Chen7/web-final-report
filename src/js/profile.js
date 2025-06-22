@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const profileId = document.getElementById('profileId');
     const profileAvatar = document.getElementById('profileAvatar');
     const profileCover = document.getElementById('profileCover');
-    const userAvatar = document.getElementById('userAvatar');
+    const userAvatar = document.querySelector('.user-info .avatar img');
     const postCount = document.getElementById('postCount');
     const followingCount = document.getElementById('followingCount');
     const followerCount = document.getElementById('followerCount');
@@ -67,28 +67,34 @@ document.addEventListener('DOMContentLoaded', function() {
     loadUserPosts();
     // 加载关注和粉丝列表
     loadFollowLists();
-    // 标签页切换只保留动态tab
-    // 关注列表标签页切换
-    const followTabs = document.querySelectorAll('.list-tabs .tab');
-    const followLists = document.querySelectorAll('.user-list');
-    followTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const tabType = this.getAttribute('data-tab');
-            // 移除所有标签的活动状态
-            followTabs.forEach(t => t.classList.remove('active'));
-            followLists.forEach(list => list.classList.remove('active'));
-            // 设置当前标签为活动状态
-            this.classList.add('active');
-            document.querySelector(`.${tabType}-list`).classList.add('active');
-        });
+    
+    // 监听localStorage变化，实时更新关注和粉丝数
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'currentUser' || e.key === 'userList') {
+            // 当用户数据或用户列表发生变化时，重新加载关注和粉丝数
+            loadFollowLists();
+        }
     });
+    
+    // 页面可见性变化时也重新加载数据（用户从其他页面返回时）
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            loadFollowLists();
+        }
+    });
+    
+    // 检查编辑按钮是否存在
+    console.log('编辑按钮元素:', editProfileBtn);
+    console.log('模态框元素:', editProfileModal);
     
     // 编辑资料模态框
     editProfileBtn.addEventListener('click', function() {
+        console.log('编辑按钮被点击');
         // 填充表单数据
         fillEditForm();
         // 显示模态框
         editProfileModal.classList.add('active');
+        console.log('模态框应该已显示');
     });
     
     closeModalBtn.addEventListener('click', function() {
@@ -141,7 +147,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             reader.onload = function(e) {
                 profileAvatar.src = e.target.result;
-                userAvatar.src = e.target.result;
+                if (userAvatar) {
+                    userAvatar.src = e.target.result;
+                }
                 
                 // 更新用户头像
                 const user = JSON.parse(localStorage.getItem('currentUser'));
@@ -213,37 +221,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (user.avatar) {
             profileAvatar.src = user.avatar;
-            userAvatar.src = user.avatar;
+            if (userAvatar) {
+                userAvatar.src = user.avatar;
+            }
         }
         
         if (user.cover) {
             profileCover.src = user.cover;
         }
         
-        // 更新统计数据（模拟数据）
+        // 更新统计数据（动态数量由loadUserPosts更新，关注和粉丝数由loadFollowLists更新）
         postCount.textContent = user.postCount || '0';
-        followingCount.textContent = user.followingCount || '0';
-        followerCount.textContent = user.followerCount || '0';
-        
-        // 更新个人信息
-        userNickname.textContent = user.nickname || user.name;
-        userGender.textContent = user.gender || '未设置';
-        userBirthday.textContent = user.birthday || '未设置';
-        userLocation.textContent = user.location || '未设置';
-        userCollege.textContent = user.college || '未设置';
-        userMajor.textContent = user.major || '未设置';
-        userBio.textContent = user.bio || '这个人很懒，什么都没留下...';
-        
-        // 更新兴趣标签
-        if (user.interestTags && user.interestTags.length > 0) {
-            userInterests.innerHTML = '';
-            user.interestTags.forEach(tag => {
-                const tagElement = document.createElement('span');
-                tagElement.className = 'interest-tag';
-                tagElement.textContent = tag;
-                userInterests.appendChild(tagElement);
-            });
-        }
     }
     
     // 填充编辑表单
@@ -328,138 +316,25 @@ document.addEventListener('DOMContentLoaded', function() {
         postCount.textContent = userPosts.length;
     }
     
-    // 加载用户相册
-    function loadUserPhotos() {
-        // 模拟相册数据
-        const photos = [
-            'src/images/DefaultAvatar.png',
-            'src/images/DefaultAvatar.png',
-            'src/images/DefaultAvatar.png',
-            'src/images/DefaultAvatar.png',
-            'src/images/DefaultAvatar.png',
-            'src/images/DefaultAvatar.png',
-            'src/images/DefaultAvatar.png',
-            'src/images/DefaultAvatar.png',
-            'src/images/DefaultAvatar.png'
-        ];
-        
-        // 渲染相册
-        userPhotoGrid.innerHTML = '';
-        
-        if (photos.length === 0) {
-            userPhotoGrid.innerHTML = '<div class="empty-state">暂无照片</div>';
-            return;
-        }
-        
-        photos.forEach(photo => {
-            const photoElement = document.createElement('div');
-            photoElement.className = 'photo-item';
-            photoElement.innerHTML = `<img src="${photo}" alt="照片">`;
-            
-            // 点击查看大图
-            photoElement.addEventListener('click', function() {
-                // 实现查看大图功能
-                const modal = document.createElement('div');
-                modal.className = 'photo-modal';
-                modal.innerHTML = `
-                    <div class="photo-modal-content">
-                        <span class="close-modal">&times;</span>
-                        <img src="${photo}" alt="照片大图">
-                    </div>
-                `;
-                
-                document.body.appendChild(modal);
-                
-                // 关闭大图
-                const closeBtn = modal.querySelector('.close-modal');
-                closeBtn.addEventListener('click', function() {
-                    document.body.removeChild(modal);
-                });
-                
-                // 点击模态框外部关闭
-                modal.addEventListener('click', function(e) {
-                    if (e.target === modal) {
-                        document.body.removeChild(modal);
-                    }
-                });
-            });
-            
-            userPhotoGrid.appendChild(photoElement);
-        });
-    }
-    
-    // 加载用户好友
-    function loadUserFriends() {
-        // 模拟好友数据
-        const friends = [
-            {
-                id: 1,
-                name: '李四',
-                avatar: 'src/images/DefaultAvatar.png',
-                college: '计算机学院'
-            },
-            {
-                id: 2,
-                name: '王五',
-                avatar: 'src/images/DefaultAvatar.png',
-                college: '经济管理学院'
-            },
-            {
-                id: 3,
-                name: '赵六',
-                avatar: 'src/images/DefaultAvatar.png',
-                college: '外国语学院'
-            },
-            {
-                id: 4,
-                name: '钱七',
-                avatar: 'src/images/DefaultAvatar.png',
-                college: '艺术学院'
-            },
-            {
-                id: 5,
-                name: '孙八',
-                avatar: 'src/images/DefaultAvatar.png',
-                college: '体育学院'
-            }
-        ];
-        
-        // 渲染好友列表
-        userFriendsList.innerHTML = '';
-        
-        if (friends.length === 0) {
-            userFriendsList.innerHTML = '<div class="empty-state">暂无好友</div>';
-            return;
-        }
-        
-        friends.forEach(friend => {
-            const friendElement = document.createElement('div');
-            friendElement.className = 'friend-item';
-            friendElement.innerHTML = `
-                <div class="friend-avatar">
-                    <img src="${friend.avatar}" alt="${friend.name}">
-                </div>
-                <div class="friend-info">
-                    <div class="friend-name">${friend.name}</div>
-                    <div class="friend-meta">${friend.college}</div>
-                </div>
-                <div class="friend-actions">
-                    <button class="btn btn-sm btn-outline">发消息</button>
-                </div>
-            `;
-            
-            userFriendsList.appendChild(friendElement);
-        });
-    }
-    
     // 加载关注和粉丝列表
     function loadFollowLists() {
+        // 重新获取当前用户信息，确保数据是最新的
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         const userList = JSON.parse(localStorage.getItem('userList') || '[]');
-        // 关注
+        
+        if (!currentUser) return;
+        
+        // 关注数：从当前用户的following数组获取长度
         const followingArr = currentUser.following || [];
         followingCount.textContent = followingArr.length;
-        // 粉丝
-        const followersArr = userList.filter(u => u.followers && u.followers.includes(currentUser.id));
+        
+        // 粉丝数：遍历所有用户，统计following数组中包含当前用户ID的用户数量
+        // 确保数据类型一致，转换为字符串进行比较
+        const currentUserId = String(currentUser.id);
+        const followersArr = userList.filter(u => {
+            if (!u.following || !Array.isArray(u.following)) return false;
+            return u.following.some(id => String(id) === currentUserId);
+        });
         followerCount.textContent = followersArr.length;
     }
     

@@ -908,34 +908,32 @@ function toggleFollow(userId, button) {
     const currentUserData = userList[currentUserIndex];
     const targetUserData = userList[targetUserIndex];
     
-    // 确保关注列表和粉丝列表存在
+    // 确保关注列表存在
     if (!currentUserData.following) currentUserData.following = [];
-    if (!targetUserData.followers) targetUserData.followers = [];
     
     // 检查是否已经关注（同时检查用户ID和用户名）
-    const isFollowing = currentUserData.following.includes(userId) || 
-                       currentUserData.following.includes(targetUserData.username);
+    // 确保数据类型一致，转换为字符串进行比较
+    const userIdStr = String(userId);
+    const isFollowing = currentUserData.following.some(id => 
+        String(id) === userIdStr || String(id) === targetUserData.username
+    );
     
     if (isFollowing) {
         // 取消关注（移除用户ID和用户名）
         currentUserData.following = currentUserData.following.filter(id => 
-            id !== userId && id !== targetUserData.username
+            String(id) !== userIdStr && String(id) !== targetUserData.username
         );
-        targetUserData.followers = targetUserData.followers.filter(id => id !== currentUser.id);
         
         button.textContent = '关注';
         button.classList.remove('following');
         alert('已取消关注');
     } else {
         // 添加关注（同时添加用户ID和用户名）
-        if (!currentUserData.following.includes(userId)) {
+        if (!currentUserData.following.some(id => String(id) === userIdStr)) {
             currentUserData.following.push(userId);
         }
-        if (!currentUserData.following.includes(targetUserData.username)) {
+        if (!currentUserData.following.some(id => String(id) === targetUserData.username)) {
             currentUserData.following.push(targetUserData.username);
-        }
-        if (!targetUserData.followers.includes(currentUser.id)) {
-            targetUserData.followers.push(currentUser.id);
         }
         
         button.textContent = '已关注';
@@ -999,11 +997,14 @@ function updateFollowCounts() {
     }
     
     if (followersCount) {
-        // 计算粉丝数量
+        // 计算粉丝数量：遍历所有用户，统计following数组中包含当前用户ID的用户数量
         const userList = JSON.parse(localStorage.getItem('userList') || '[]');
-        const followers = userList.filter(user => 
-            user.followers && user.followers.includes(currentUser.id)
-        ).length;
+        // 确保数据类型一致，转换为字符串进行比较
+        const currentUserId = String(currentUser.id);
+        const followers = userList.filter(user => {
+            if (!user.following || !Array.isArray(user.following)) return false;
+            return user.following.some(id => String(id) === currentUserId);
+        }).length;
         followersCount.textContent = followers;
     }
 }
@@ -1029,10 +1030,13 @@ function getFollowersList(username) {
     const user = userList.find(u => u.username === username);
     if (!user) return [];
     
-    // 查找所有关注了该用户的用户
-    return userList.filter(u => 
-        u.followers && u.followers.includes(user.id)
-    ).map(u => u.id);
+    // 查找所有关注了该用户的用户（检查其他用户的following数组）
+    // 确保数据类型一致，转换为字符串进行比较
+    const targetUserId = String(user.id);
+    return userList.filter(u => {
+        if (!u.following || !Array.isArray(u.following)) return false;
+        return u.following.some(id => String(id) === targetUserId);
+    }).map(u => u.id);
 }
 
 /**
@@ -1044,9 +1048,11 @@ function isFollowingUser(userId) {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser || !currentUser.following) return false;
     
-    // 同时检查用户ID和用户名
-    return currentUser.following.includes(userId) || 
-           currentUser.following.includes(userId.toString());
+    // 确保数据类型一致，转换为字符串进行比较
+    const userIdStr = String(userId);
+    return currentUser.following.some(id => 
+        String(id) === userIdStr || String(id) === userIdStr.toString()
+    );
 }
 
 /**
