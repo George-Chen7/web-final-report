@@ -352,6 +352,7 @@
     align-items: center;
     padding: 15px;
     border-bottom: 1px solid var(--border-color);
+    position: relative;
 }
 
 .post-avatar {
@@ -1206,4 +1207,32 @@
 
 .visibility-badge i {
     font-size: 10px;
+}
+
+/* 删除按钮样式 */
+.btn-delete-post {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    opacity: 0.7;
+}
+
+.btn-delete-post:hover {
+    background-color: rgba(220, 53, 69, 0.2);
+    opacity: 1;
+}
+
+.btn-delete-post i {
+    font-size: 14px;
 }

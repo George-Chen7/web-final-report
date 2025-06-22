@@ -551,6 +551,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         visibilityText = '公开';
                 }
                 
+                // 删除按钮 - 只在访问自己的主页时显示
+                const deleteButton = isOwnProfile ? 
+                    `<button class="btn-delete-post" data-post-id="${post.id}" title="删除动态">
+                        <i class="bi bi-trash"></i>
+                    </button>` : '';
+                
                 postElement.innerHTML = `
                     <div class="post-header">
                         <div class="post-avatar">
@@ -565,6 +571,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </span>
                             </div>
                         </div>
+                        ${deleteButton}
                     </div>
                     <div class="post-content">
                         <div class="post-text">${formattedContent}</div>
@@ -809,6 +816,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // 获取当前用户
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         
+        // 删除按钮点击事件
+        const deleteButtons = document.querySelectorAll('.btn-delete-post');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                if (confirm('确定要删除这条动态吗？删除后无法恢复。')) {
+                    deleteProfilePost(postId);
+                }
+            });
+        });
+        
         // 评论按钮点击事件
         const commentButtons = document.querySelectorAll('.post-comment-btn');
         commentButtons.forEach(button => {
@@ -1000,5 +1019,45 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 显示成功消息
         showMessage('评论发送成功', 'success');
+    }
+    
+    // 删除个人主页动态
+    function deleteProfilePost(postId) {
+        // 获取所有动态
+        const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
+        const postIndex = allPosts.findIndex(p => String(p.id) === String(postId));
+        
+        if (postIndex === -1) {
+            alert('动态不存在');
+            return;
+        }
+        
+        // 检查是否是当前用户的动态
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const post = allPosts[postIndex];
+        
+        if (!currentUser || (String(post.user.id) !== String(currentUser.id) && post.user.name !== currentUser.username)) {
+            alert('只能删除自己的动态');
+            return;
+        }
+        
+        // 从数组中删除动态
+        allPosts.splice(postIndex, 1);
+        
+        // 保存到localStorage
+        localStorage.setItem('postList', JSON.stringify(allPosts));
+        
+        // 从页面中移除动态元素
+        const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+        if (postElement) {
+            postElement.remove();
+        }
+        
+        // 更新动态数量
+        const currentCount = parseInt(postCount.textContent) - 1;
+        postCount.textContent = currentCount;
+        
+        // 显示成功消息
+        showMessage('动态删除成功', 'success');
     }
 });
