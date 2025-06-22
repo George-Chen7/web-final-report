@@ -2,6 +2,352 @@
  * 个人资料页面脚本
  */
 
+// 全局变量
+let clickUser = null;
+let isOwnProfile = false;
+
+// ========== 全局交互函数 ========== //
+
+function initProfilePostInteractions() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    // 删除按钮点击事件
+    const deleteButtons = document.querySelectorAll('.btn-delete-post');
+    deleteButtons.forEach(button => {
+        // 移除旧事件监听器
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const postId = this.getAttribute('data-post-id');
+            if (confirm('确定要删除这条动态吗？删除后无法恢复。')) {
+                deleteProfilePost(postId);
+            }
+        });
+    });
+    
+    // 点赞按钮点击事件 - 同时处理个人动态和收藏动态
+    const likeButtons = document.querySelectorAll('.post-like-btn');
+    likeButtons.forEach(button => {
+        // 移除旧事件监听器
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const postId = this.getAttribute('data-post-id');
+            toggleProfileLike(postId);
+        });
+    });
+    
+    // 收藏按钮点击事件 - 同时处理个人动态和收藏动态
+    const bookmarkButtons = document.querySelectorAll('.post-bookmark-btn');
+    bookmarkButtons.forEach(button => {
+        // 移除旧事件监听器
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!currentUser || currentUser.role === 'guest') {
+                alert('请先登录后才能收藏');
+                return;
+            }
+            const postId = this.getAttribute('data-post-id');
+            toggleProfileBookmark(postId);
+        });
+    });
+    
+    // 评论按钮点击事件 - 同时处理个人动态和收藏动态
+    const commentButtons = document.querySelectorAll('.post-comment-btn');
+    commentButtons.forEach(button => {
+        // 移除旧事件监听器
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        newBtn.addEventListener('click', function(e) {
+            console.log('评论按钮被点击');
+            if (currentUser && currentUser.role === 'guest') {
+                e.preventDefault();
+                alert('请先登录后才能评论');
+                return;
+            }
+            
+            const postItem = this.closest('.post-item');
+            const commentsSection = postItem.querySelector('.post-comments');
+            const postId = postItem.getAttribute('data-post-id');
+            
+            console.log('postItem:', postItem);
+            console.log('commentsSection:', commentsSection);
+            console.log('postId:', postId);
+            console.log('commentsSection.classList:', commentsSection.classList);
+            console.log('contains show:', commentsSection.classList.contains('show'));
+            
+            // 展开/收起逻辑
+            if (!commentsSection.classList.contains('show')) {
+                console.log('准备展开评论区域');
+                // 展开，渲染评论内容
+                const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
+                const post = allPosts.find(p => String(p.id) === String(postId));
+                
+                console.log('找到的动态:', post);
+                
+                if (post) {
+                    commentsSection.innerHTML = createProfileCommentsHTML(post);
+                    commentsSection.classList.add('show');
+                    console.log('评论区域已展开');
+                    
+                    // 立即启用评论输入区（如果用户已登录）
+                    const input = commentsSection.querySelector('input');
+                    const btn = commentsSection.querySelector('.btn-send-comment');
+                    
+                    if (currentUser && currentUser.role !== 'guest') {
+                        // 登录用户，启用输入框和发送按钮
+                        if (input) {
+                            input.disabled = false;
+                            input.placeholder = '添加评论...';
+                            input.focus(); // 自动聚焦到输入框
+                        }
+                        if (btn) {
+                            btn.disabled = false;
+                        }
+                    } else {
+                        // 游客或未登录用户，保持禁用状态
+                        if (input) {
+                            input.disabled = true;
+                            input.placeholder = '请先登录后评论...';
+                        }
+                        if (btn) {
+                            btn.disabled = true;
+                        }
+                    }
+                    
+                    // 绑定评论发送事件
+                    bindProfileCommentEvents(postId);
+                } else {
+                    console.error('未找到对应的动态数据');
+                }
+            } else {
+                console.log('准备收起评论区域');
+                // 收起，清空内容
+                commentsSection.classList.remove('show');
+                commentsSection.innerHTML = '';
+                console.log('评论区域已收起');
+            }
+        });
+    });
+}
+
+function createProfileCommentsHTML(post) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    let commentsHTML = '';
+    if (post.comments && post.comments.length > 0) {
+        post.comments.forEach(comment => {
+            const commentUser = comment.user || {
+                name: comment.nickname || comment.username,
+                avatar: comment.avatar
+            };
+            const commentTime = comment.time || comment.publishTime;
+            commentsHTML += `
+                <div class="comment-item">
+                    <div class="comment-avatar">
+                        <img src="${commentUser.avatar || 'src/images/DefaultAvatar.png'}" alt="用户头像">
+                    </div>
+                    <div class="comment-content">
+                        <div class="comment-author">${commentUser.name}</div>
+                        <div class="comment-text">${comment.content}</div>
+                        <div class="comment-time">${formatTime(commentTime)}</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    const isLoggedIn = currentUser && currentUser.role !== 'guest';
+    const inputDisabled = !isLoggedIn;
+    const inputPlaceholder = isLoggedIn ? '添加评论...' : '请先登录后评论...';
+    const btnDisabled = !isLoggedIn;
+    commentsHTML += `
+        <div class="comment-input">
+            <img src="${currentUser && currentUser.avatar ? currentUser.avatar : 'src/images/DefaultAvatar.png'}" alt="用户头像">
+            <input type="text" placeholder="${inputPlaceholder}" ${inputDisabled ? 'disabled' : ''}>
+            <button class="btn-send-comment" ${btnDisabled ? 'disabled' : ''}>发送</button>
+        </div>
+    `;
+    return commentsHTML;
+}
+
+function bindProfileCommentEvents(postId) {
+    const commentsSection = document.querySelector(`[data-post-id="${postId}"] .post-comments`);
+    const input = commentsSection.querySelector('input');
+    const btn = commentsSection.querySelector('.btn-send-comment');
+    btn.addEventListener('click', function() {
+        const content = input.value.trim();
+        if (content) {
+            sendProfileComment(postId, content);
+            input.value = '';
+        }
+    });
+    input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const content = input.value.trim();
+            if (content) {
+                sendProfileComment(postId, content);
+                input.value = '';
+            }
+        }
+    });
+    input.addEventListener('input', function() {
+        btn.disabled = !input.value.trim();
+    });
+}
+
+function sendProfileComment(postId, content) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!content.trim()) {
+        alert('请输入评论内容');
+        return;
+    }
+    if (!currentUser || currentUser.role === 'guest') {
+        alert('请先登录后才能发送评论');
+        return;
+    }
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const user = userList.find(u => u.username === currentUser.username);
+    if (user && user.banned) {
+        alert('当前账号被封禁，无法操作');
+        return;
+    }
+    let posts = JSON.parse(localStorage.getItem('postList')) || [];
+    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
+    if (postIndex === -1) {
+        alert('动态不存在');
+        return;
+    }
+    const newComment = {
+        id: Date.now(),
+        user: {
+            id: currentUser.id,
+            name: currentUser.username,
+            nickname: currentUser.nickname || currentUser.username,
+            avatar: currentUser.avatar || 'src/images/DefaultAvatar.png'
+        },
+        content: content.trim(),
+        time: new Date(),
+        likes: 0
+    };
+    if (!posts[postIndex].comments) {
+        posts[postIndex].comments = [];
+    }
+    posts[postIndex].comments.push(newComment);
+    localStorage.setItem('postList', JSON.stringify(posts));
+    const commentInput = document.querySelector(`[data-post-id="${postId}"] .comment-input input`);
+    if (commentInput) {
+        commentInput.value = '';
+        commentInput.dispatchEvent(new Event('input'));
+    }
+    const activeTab = document.querySelector('.profile-tabs li.active');
+    if (activeTab) {
+        const tabName = activeTab.getAttribute('data-tab');
+        if (tabName === 'bookmarks') {
+            loadBookmarksList();
+        } else {
+            loadUserPosts();
+        }
+    }
+    alert('评论发表成功！');
+}
+
+function toggleProfileLike(postId) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) {
+        alert('请先登录');
+        return;
+    }
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const user = userList.find(u => u.username === currentUser.username);
+    if (user && user.banned) {
+        alert('当前账号被封禁，无法操作');
+        return;
+    }
+    let posts = JSON.parse(localStorage.getItem('postList')) || [];
+    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
+    if (postIndex === -1) {
+        alert('动态不存在');
+        return;
+    }
+    const post = posts[postIndex];
+    if (!post.likedBy) {
+        post.likedBy = [];
+    }
+    const userLikedIndex = post.likedBy.indexOf(currentUser.username);
+    if (userLikedIndex === -1) {
+        post.likedBy.push(currentUser.username);
+        post.likes = (post.likes || 0) + 1;
+    } else {
+        post.likedBy.splice(userLikedIndex, 1);
+        post.likes = Math.max(0, (post.likes || 0) - 1);
+    }
+    localStorage.setItem('postList', JSON.stringify(posts));
+    updateProfileLikeButton(postId, post.likes, post.likedBy.includes(currentUser.username));
+}
+
+function updateProfileLikeButton(postId, likeCount, isLiked) {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (!postElement) return;
+    const likeButton = postElement.querySelector('.post-like-btn');
+    if (!likeButton) return;
+    likeButton.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> ${likeCount || 0}`;
+    if (isLiked) {
+        likeButton.classList.add('active');
+    } else {
+        likeButton.classList.remove('active');
+    }
+}
+
+function toggleProfileBookmark(postId) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser || currentUser.role === 'guest') {
+        alert('请先登录后才能收藏');
+        return;
+    }
+    let posts = JSON.parse(localStorage.getItem('postList')) || [];
+    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
+    if (postIndex === -1) {
+        alert('动态不存在');
+        return;
+    }
+    const post = posts[postIndex];
+    if (!post.bookmarkedBy) {
+        post.bookmarkedBy = [];
+    }
+    const isBookmarked = post.bookmarkedBy.includes(currentUser.username);
+    if (isBookmarked) {
+        post.bookmarkedBy = post.bookmarkedBy.filter(username => username !== currentUser.username);
+        alert('已取消收藏');
+    } else {
+        post.bookmarkedBy.push(currentUser.username);
+        alert('收藏成功！');
+    }
+    localStorage.setItem('postList', JSON.stringify(posts));
+    updateProfileBookmarkButton(postId, post.bookmarkedBy.length, !isBookmarked);
+    const activeTab = document.querySelector('.profile-tabs li.active');
+    if (activeTab && activeTab.getAttribute('data-tab') === 'bookmarks') {
+        loadBookmarksList();
+    }
+}
+
+function updateProfileBookmarkButton(postId, bookmarkCount, isBookmarked) {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (!postElement) return;
+    const bookmarkButton = postElement.querySelector('.post-bookmark-btn');
+    if (!bookmarkButton) return;
+    bookmarkButton.innerHTML = `<i class="bi ${isBookmarked ? 'bi-bookmark-fill' : 'bi-bookmark'}"></i> ${bookmarkCount || 0}`;
+    if (isBookmarked) {
+        bookmarkButton.classList.add('active');
+    } else {
+        bookmarkButton.classList.remove('active');
+    }
+}
+
+// ========== 全局函数 ========== //
+
 // 全局取消关注函数
 function unfollowUser(userId) {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -82,9 +428,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 获取clickUser（从URL参数或localStorage）
-    let clickUser = null;
+    let clickUserId = null;
     const urlParams = new URLSearchParams(window.location.search);
-    const clickUserId = urlParams.get('userId');
+    clickUserId = urlParams.get('userId');
     
     if (clickUserId) {
         // 从URL参数获取用户ID，从userList中查找用户信息
@@ -102,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 判断是否访问自己的主页
-    const isOwnProfile = String(currentUser.id) === String(clickUser.id);
+    isOwnProfile = String(currentUser.id) === String(clickUser.id);
     
     // 检查用户是否被封禁
     const userList = JSON.parse(localStorage.getItem('userList') || '[]');
@@ -796,6 +1142,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (tabName === 'following') {
                         loadFollowingList();
                     }
+                    
+                    // 如果切换到收藏动态，加载收藏数据
+                    if (tabName === 'bookmarks') {
+                        loadBookmarksList();
+                    }
                 }
             });
         });
@@ -892,250 +1243,176 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 初始化个人主页动态交互
-    function initProfilePostInteractions() {
-        // 获取当前用户
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    // 加载收藏动态列表
+    function loadBookmarksList() {
+        // 确保clickUser已初始化
+        if (!clickUser) {
+            console.error('clickUser未初始化');
+            return;
+        }
         
-        // 删除按钮点击事件
-        const deleteButtons = document.querySelectorAll('.btn-delete-post');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const postId = this.getAttribute('data-post-id');
-                if (confirm('确定要删除这条动态吗？删除后无法恢复。')) {
-                    deleteProfilePost(postId);
-                }
-            });
+        // 获取所有动态
+        let allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
+        
+        // 获取当前用户信息
+        const currentUser = JSON.parse(localStorage.getItem('currentUser')) || { role: 'guest' };
+        
+        // 获取用户列表，用于检查封禁状态
+        const userList = JSON.parse(localStorage.getItem('userList')) || [];
+        
+        // 过滤掉被封禁用户发布的帖子
+        allPosts = allPosts.filter(post => {
+            if (!post.user || !post.user.name) return true; // 保留没有用户信息的帖子
+            
+            // 查找用户是否被封禁
+            const user = userList.find(u => u.username === post.user.name);
+            return !user || !user.banned; // 如果用户不存在或未被封禁，则显示帖子
         });
         
-        // 点赞按钮点击事件
-        const likeButtons = document.querySelectorAll('.post-like-btn');
-        likeButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const postId = parseInt(this.getAttribute('data-post-id'));
-                toggleProfileLike(postId);
-            });
+        // 筛选clickUser收藏的动态
+        let bookmarkedPosts = allPosts.filter(post => {
+            if (!post.bookmarkedBy || !Array.isArray(post.bookmarkedBy)) return false;
+            
+            // 检查clickUser是否收藏了这条动态
+            return post.bookmarkedBy.includes(clickUser.username);
         });
         
-        // 收藏按钮点击事件
-        const bookmarkButtons = document.querySelectorAll('.post-bookmark-btn');
-        bookmarkButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (!currentUser || currentUser.role === 'guest') {
-                    alert('请先登录后才能收藏');
-                    return;
-                }
-                const postId = this.getAttribute('data-post-id');
-                toggleProfileBookmark(postId);
-            });
-        });
+        // 获取收藏动态列表容器
+        const bookmarksList = document.getElementById('bookmarksList');
+        if (!bookmarksList) return;
         
-        // 评论按钮点击事件
-        const commentButtons = document.querySelectorAll('.post-comment-btn');
-        commentButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                if (currentUser && currentUser.role === 'guest') {
-                    e.preventDefault();
-                    alert('请先登录后才能评论');
-                    return;
-                }
+        // 渲染收藏动态列表
+        bookmarksList.innerHTML = '';
+        if (bookmarkedPosts.length === 0) {
+            bookmarksList.innerHTML = `
+                <div class="bookmarks-empty">
+                    <i class="bi bi-bookmark"></i>
+                    <h3>还没有收藏任何动态</h3>
+                    <p>去发现更多精彩内容吧！</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // 按时间倒序排列
+        bookmarkedPosts.sort((a, b) => new Date(b.time) - new Date(a.time));
+        
+        // 复用个人动态的显示逻辑
+        bookmarkedPosts.forEach(post => {
+            const postElement = document.createElement('div');
+            postElement.className = 'post-item';
+            postElement.setAttribute('data-post-id', post.id);
+            
+            // 处理图片展示
+            let imagesHTML = '';
+            if (post.images && post.images.length > 0) {
+                // 获取图片存储数据
+                const imageStorage = JSON.parse(localStorage.getItem('imageStorage') || '{}');
                 
-                const postItem = this.closest('.post-item');
-                const commentsSection = postItem.querySelector('.post-comments');
-                const postId = postItem.getAttribute('data-post-id');
-                
-                // 展开/收起逻辑
-                if (!commentsSection.classList.contains('show')) {
-                    // 展开，渲染评论内容
-                    const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
-                    const post = allPosts.find(p => String(p.id) === String(postId));
-                    
-                    if (post) {
-                        commentsSection.innerHTML = createProfileCommentsHTML(post);
-                        commentsSection.classList.add('show');
-                        
-                        // 立即启用评论输入区（如果用户已登录）
-                        const input = commentsSection.querySelector('input');
-                        const btn = commentsSection.querySelector('.btn-send-comment');
-                        
-                        if (currentUser && currentUser.role !== 'guest') {
-                            // 登录用户，启用输入框和发送按钮
-                            if (input) {
-                                input.disabled = false;
-                                input.placeholder = '添加评论...';
-                                input.focus(); // 自动聚焦到输入框
-                            }
-                            if (btn) {
-                                btn.disabled = false;
-                            }
-                        } else {
-                            // 游客或未登录用户，保持禁用状态
-                            if (input) {
-                                input.disabled = true;
-                                input.placeholder = '请先登录后评论...';
-                            }
-                            if (btn) {
-                                btn.disabled = true;
-                            }
-                        }
-                        
-                        // 绑定评论发送事件
-                        bindProfileCommentEvents(postId);
+                // 处理图片路径，如果是用户上传的图片，从imageStorage中获取
+                const processedImages = post.images.map(imgPath => {
+                    // 如果是用户上传的图片路径（以user_uploads开头）
+                    if (imgPath.startsWith('user_uploads/')) {
+                        return imageStorage[imgPath] || 'src/images/DefaultAvatar.png';
                     }
-                } else {
-                    // 收起，清空内容
-                    commentsSection.classList.remove('show');
-                    commentsSection.innerHTML = '';
-                }
-            });
-        });
-    }
-    
-    // 生成个人主页评论HTML
-    function createProfileCommentsHTML(post) {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        let commentsHTML = '';
-        
-        if (post.comments && post.comments.length > 0) {
-            post.comments.forEach(comment => {
-                // 兼容两种数据结构
-                const commentUser = comment.user || {
-                    name: comment.nickname || comment.username,
-                    avatar: comment.avatar
-                };
-                const commentTime = comment.time || comment.publishTime;
+                    // 如果是本地图片路径，直接使用
+                    return imgPath;
+                });
                 
-                commentsHTML += `
-                    <div class="comment-item">
-                        <div class="comment-avatar">
-                            <img src="${commentUser.avatar || 'src/images/DefaultAvatar.png'}" alt="用户头像">
+                if (processedImages.length === 1) {
+                    imagesHTML = `
+                        <div class="post-images">
+                            <img src="${processedImages[0]}" alt="动态图片">
                         </div>
-                        <div class="comment-content">
-                            <div class="comment-author">${commentUser.name}</div>
-                            <div class="comment-text">${comment.content}</div>
-                            <div class="comment-time">${formatTime(commentTime)}</div>
+                    `;
+                } else if (processedImages.length === 2) {
+                    imagesHTML = `
+                        <div class="post-images grid-2">
+                            <img src="${processedImages[0]}" alt="动态图片">
+                            <img src="${processedImages[1]}" alt="动态图片">
+                        </div>
+                    `;
+                } else if (processedImages.length >= 3) {
+                    imagesHTML = `
+                        <div class="post-images grid-3">
+                            <img src="${processedImages[0]}" alt="动态图片">
+                            <img src="${processedImages[1]}" alt="动态图片">
+                            <img src="${processedImages[2]}" alt="动态图片">
+                        </div>
+                    `;
+                }
+            }
+            
+            // 格式化内容，处理换行和话题标签
+            const formattedContent = post.content
+                .replace(/\n/g, '</p><p>')
+                .replace(/#(\S+)/g, '<a href="#" class="topic-tag">#$1</a>');
+            
+            // 可见性标识
+            let visibilityIcon = '';
+            let visibilityText = '';
+            switch (post.visibility) {
+                case 'public':
+                    visibilityIcon = '<i class="bi bi-globe"></i>';
+                    visibilityText = '公开';
+                    break;
+                case 'followers':
+                    visibilityIcon = '<i class="bi bi-people"></i>';
+                    visibilityText = '粉丝可见';
+                    break;
+                case 'private':
+                    visibilityIcon = '<i class="bi bi-lock"></i>';
+                    visibilityText = '私密';
+                    break;
+                default:
+                    visibilityIcon = '<i class="bi bi-globe"></i>';
+                    visibilityText = '公开';
+            }
+            
+            // 检查当前用户是否已点赞此动态
+            const isLiked = post.likedBy && post.likedBy.includes(currentUser?.username);
+            const likeIconClass = isLiked ? 'bi-heart-fill' : 'bi-heart';
+            const likeButtonClass = isLiked ? 'post-like-btn active' : 'post-like-btn';
+            
+            // 检查当前用户是否已收藏此动态
+            const isBookmarked = post.bookmarkedBy && post.bookmarkedBy.includes(currentUser?.username);
+            const bookmarkIconClass = isBookmarked ? 'bi-bookmark-fill' : 'bi-bookmark';
+            const bookmarkButtonClass = isBookmarked ? 'post-bookmark-btn active' : 'post-bookmark-btn';
+            
+            postElement.innerHTML = `
+                <div class="post-header">
+                    <div class="post-avatar">
+                        <img src="${post.user.avatar || 'src/images/DefaultAvatar.png'}" alt="头像">
+                    </div>
+                    <div class="post-author">
+                        <div class="post-author-name">${post.user.nickname || post.user.name}</div>
+                        <div class="post-time">
+                            ${formatTime(post.time)}
+                            <span class="visibility-badge" title="${visibilityText}">
+                                ${visibilityIcon} ${visibilityText}
+                            </span>
                         </div>
                     </div>
-                `;
-            });
-        }
-        
-        // 评论输入区 - 根据用户状态设置初始状态
-        const isLoggedIn = currentUser && currentUser.role !== 'guest';
-        const inputDisabled = !isLoggedIn;
-        const inputPlaceholder = isLoggedIn ? '添加评论...' : '请先登录后评论...';
-        const btnDisabled = !isLoggedIn;
-        
-        commentsHTML += `
-            <div class="comment-input">
-                <img src="${currentUser && currentUser.avatar ? currentUser.avatar : 'src/images/DefaultAvatar.png'}" alt="用户头像">
-                <input type="text" placeholder="${inputPlaceholder}" ${inputDisabled ? 'disabled' : ''}>
-                <button class="btn-send-comment" ${btnDisabled ? 'disabled' : ''}>发送</button>
-            </div>
-        `;
-        return commentsHTML;
-    }
-    
-    // 绑定个人主页评论事件
-    function bindProfileCommentEvents(postId) {
-        const commentsSection = document.querySelector(`[data-post-id="${postId}"] .post-comments`);
-        const input = commentsSection.querySelector('input');
-        const btn = commentsSection.querySelector('.btn-send-comment');
-        
-        // 发送按钮点击事件
-        btn.addEventListener('click', function() {
-            const content = input.value.trim();
-            if (content) {
-                sendProfileComment(postId, content);
-                input.value = '';
-            }
+                </div>
+                <div class="post-content">
+                    <div class="post-text">${formattedContent}</div>
+                    ${imagesHTML}
+                </div>
+                <div class="post-footer">
+                    <div class="post-stats">
+                        <span class="${likeButtonClass}" data-post-id="${post.id}" style="cursor: pointer;"><i class="bi ${likeIconClass}"></i> ${post.likes || 0}</span>
+                        <span class="post-stat post-comment-btn" style="cursor: pointer;"><i class="bi bi-chat"></i> ${post.comments ? post.comments.length : 0}</span>
+                        <span class="${bookmarkButtonClass}" data-post-id="${post.id}" style="cursor: pointer;"><i class="bi ${bookmarkIconClass}"></i> ${post.bookmarkedBy ? post.bookmarkedBy.length : 0}</span>
+                    </div>
+                </div>
+                <div class="post-comments"><!-- 默认收起，点击评论按钮后展开 --></div>
+            `;
+            
+            bookmarksList.appendChild(postElement);
         });
         
-        // 回车发送
-        input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const content = input.value.trim();
-                if (content) {
-                    sendProfileComment(postId, content);
-                    input.value = '';
-                }
-            }
-        });
-        
-        // 输入时启用/禁用发送按钮
-        input.addEventListener('input', function() {
-            btn.disabled = !input.value.trim();
-        });
-    }
-    
-    // 发送个人主页评论
-    function sendProfileComment(postId, content) {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        
-        if (!content.trim()) {
-            alert('请输入评论内容');
-            return;
-        }
-        
-        if (!currentUser || currentUser.role === 'guest') {
-            alert('请先登录后才能发送评论');
-            return;
-        }
-        
-        // 检查用户是否被封禁
-        const userList = JSON.parse(localStorage.getItem('userList')) || [];
-        const user = userList.find(u => u.username === currentUser.username);
-        if (user && user.banned) {
-            alert('当前账号被封禁，无法操作');
-            return;
-        }
-        
-        // 获取动态数据
-        let posts = JSON.parse(localStorage.getItem('postList')) || [];
-        const postIndex = posts.findIndex(post => post.id === postId);
-        
-        if (postIndex === -1) {
-            alert('动态不存在');
-            return;
-        }
-        
-        // 创建新评论
-        const newComment = {
-            id: Date.now(),
-            user: {
-                id: currentUser.id,
-                name: currentUser.username,
-                nickname: currentUser.nickname || currentUser.username,
-                avatar: currentUser.avatar || 'src/images/DefaultAvatar.png'
-            },
-            content: content.trim(),
-            time: new Date(),
-            likes: 0
-        };
-        
-        // 添加评论到动态
-        if (!posts[postIndex].comments) {
-            posts[postIndex].comments = [];
-        }
-        posts[postIndex].comments.push(newComment);
-        
-        // 保存到localStorage
-        localStorage.setItem('postList', JSON.stringify(posts));
-        
-        // 清空输入框
-        const commentInput = document.querySelector(`[data-post-id="${postId}"] .comment-input input`);
-        if (commentInput) {
-            commentInput.value = '';
-            commentInput.dispatchEvent(new Event('input')); // 触发input事件以更新发送按钮状态
-        }
-        
-        // 重新渲染动态
-        loadUserPosts();
-        
-        showMessage('评论发表成功！', 'success');
+        // 复用个人动态的交互功能
+        initProfilePostInteractions();
     }
     
     // 删除个人主页动态
@@ -1274,152 +1551,5 @@ function updateFollowCounts() {
     }
 }
 
-/**
- * 个人主页动态点赞功能
- * @param {number} postId - 动态ID
- */
-function toggleProfileLike(postId) {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser) {
-        alert('请先登录');
-        return;
-    }
-    
-    // 检查用户是否被封禁
-    const userList = JSON.parse(localStorage.getItem('userList')) || [];
-    const user = userList.find(u => u.username === currentUser.username);
-    if (user && user.banned) {
-        alert('当前账号被封禁，无法操作');
-        return;
-    }
-    
-    // 获取动态数据
-    let posts = JSON.parse(localStorage.getItem('postList')) || [];
-    const postIndex = posts.findIndex(post => post.id === postId);
-    
-    if (postIndex === -1) {
-        alert('动态不存在');
-        return;
-    }
-    
-    const post = posts[postIndex];
-    
-    // 初始化点赞用户列表
-    if (!post.likedBy) {
-        post.likedBy = [];
-    }
-    
-    // 检查用户是否已经点赞
-    const userLikedIndex = post.likedBy.indexOf(currentUser.username);
-    
-    if (userLikedIndex === -1) {
-        // 用户未点赞，添加点赞
-        post.likedBy.push(currentUser.username);
-        post.likes = (post.likes || 0) + 1;
-    } else {
-        // 用户已点赞，取消点赞
-        post.likedBy.splice(userLikedIndex, 1);
-        post.likes = Math.max(0, (post.likes || 0) - 1);
-    }
-    
-    // 保存到localStorage
-    localStorage.setItem('postList', JSON.stringify(posts));
-    
-    // 更新页面显示
-    updateProfileLikeButton(postId, post.likes, post.likedBy.includes(currentUser.username));
-}
-
-/**
- * 更新个人主页点赞按钮状态
- * @param {number} postId - 动态ID
- * @param {number} likeCount - 点赞数
- * @param {boolean} isLiked - 是否已点赞
- */
-function updateProfileLikeButton(postId, likeCount, isLiked) {
-    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-    if (!postElement) return;
-    
-    const likeButton = postElement.querySelector('.post-like-btn');
-    const likeIcon = likeButton.querySelector('i');
-    
-    // 更新点赞数
-    likeButton.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> ${likeCount || 0}`;
-    
-    // 更新点赞状态
-    if (isLiked) {
-        likeButton.classList.add('active');
-    } else {
-        likeButton.classList.remove('active');
-    }
-}
-
-/**
- * 切换个人主页动态收藏状态
- * @param {string} postId - 动态ID
- */
-function toggleProfileBookmark(postId) {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser || currentUser.role === 'guest') {
-        alert('请先登录后才能收藏');
-        return;
-    }
-    
-    // 获取动态数据
-    let posts = JSON.parse(localStorage.getItem('postList')) || [];
-    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
-    
-    if (postIndex === -1) {
-        alert('动态不存在');
-        return;
-    }
-    
-    const post = posts[postIndex];
-    
-    // 初始化收藏用户列表
-    if (!post.bookmarkedBy) {
-        post.bookmarkedBy = [];
-    }
-    
-    // 检查用户是否已经收藏
-    const isBookmarked = post.bookmarkedBy.includes(currentUser.username);
-    
-    if (isBookmarked) {
-        // 用户已收藏，取消收藏
-        post.bookmarkedBy = post.bookmarkedBy.filter(username => username !== currentUser.username);
-        alert('已取消收藏');
-    } else {
-        // 用户未收藏，添加收藏
-        post.bookmarkedBy.push(currentUser.username);
-        alert('收藏成功！');
-    }
-    
-    // 保存到localStorage
-    localStorage.setItem('postList', JSON.stringify(posts));
-    
-    // 直接更新收藏按钮状态
-    updateProfileBookmarkButton(postId, post.bookmarkedBy.length, !isBookmarked);
-}
-
-/**
- * 更新个人主页收藏按钮状态
- * @param {string} postId - 动态ID
- * @param {number} bookmarkCount - 收藏数
- * @param {boolean} isBookmarked - 是否已收藏
- */
-function updateProfileBookmarkButton(postId, bookmarkCount, isBookmarked) {
-    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-    if (!postElement) return;
-    
-    const bookmarkButton = postElement.querySelector('.post-bookmark-btn');
-    if (!bookmarkButton) return;
-    
-    // 更新收藏数
-    bookmarkButton.innerHTML = `<i class="bi ${isBookmarked ? 'bi-bookmark-fill' : 'bi-bookmark'}"></i> ${bookmarkCount || 0}`;
-    
-    // 更新收藏状态
-    if (isBookmarked) {
-        bookmarkButton.classList.add('active');
-    } else {
-        bookmarkButton.classList.remove('active');
-    }
-}
+// 确保全局可用
+window.initProfilePostInteractions = initProfilePostInteractions;
