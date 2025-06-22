@@ -2,6 +2,9 @@
  * 动态发布页面脚本
  */
 
+// 图片存储管理
+let uploadedImages = [];
+
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化页面
     initPage();
@@ -124,6 +127,11 @@ function handleImageUpload(e) {
         removeBtn.className = 'remove-image';
         removeBtn.innerHTML = '<i class="bi bi-x"></i>';
         removeBtn.addEventListener('click', function() {
+            // 从上传图片数组中移除
+            const index = Array.from(preview.children).indexOf(previewItem);
+            if (index > -1) {
+                uploadedImages.splice(index, 1);
+            }
             preview.removeChild(previewItem);
         });
         previewItem.appendChild(removeBtn);
@@ -135,9 +143,29 @@ function handleImageUpload(e) {
         const reader = new FileReader();
         reader.onload = function(e) {
             img.src = e.target.result;
+            
+            // 生成图片路径并存储
+            const imagePath = generateImagePath(file);
+            uploadedImages.push({
+                path: imagePath,
+                file: file,
+                preview: e.target.result
+            });
         };
         reader.readAsDataURL(file);
     });
+}
+
+/**
+ * 生成图片路径
+ * @param {File} file - 图片文件
+ * @returns {string} 图片路径
+ */
+function generateImagePath(file) {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substr(2, 9);
+    const extension = file.name.split('.').pop();
+    return `user_uploads/${timestamp}_${random}.${extension}`;
 }
 
 /**
@@ -227,13 +255,13 @@ function handleSubmit(e) {
     
     // 获取表单数据
     const content = document.getElementById('postContent').value.trim();
-    const images = Array.from(document.querySelectorAll('.preview-item img')).map(img => img.src);
+    const imagePaths = uploadedImages.map(img => img.path); // 只存储图片路径
     const topics = Array.from(document.querySelectorAll('.topic-tag.selected')).map(tag => tag.getAttribute('data-tag'));
     const visibility = document.querySelector('input[name="privacy"]:checked').value;
     
     // 验证内容
     const contentError = document.getElementById('contentError');
-    if (!content && images.length === 0) {
+    if (!content && imagePaths.length === 0) {
         if (contentError) {
             contentError.textContent = '请输入内容或上传图片';
         }
@@ -252,7 +280,7 @@ function handleSubmit(e) {
         id: generateUniqueId(),
         userId: getCurrentUserId(),
         content: content,
-        images: images,
+        images: imagePaths, // 只存储图片路径
         topics: topics,
         visibility: visibility,
         createdAt: new Date().toISOString(),
@@ -285,6 +313,13 @@ function simulatePostRequest(postData) {
         // 获取当前用户信息
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         
+        // 存储图片数据到localStorage（仅用于演示）
+        const imageStorage = JSON.parse(localStorage.getItem('imageStorage') || '{}');
+        uploadedImages.forEach(img => {
+            imageStorage[img.path] = img.preview;
+        });
+        localStorage.setItem('imageStorage', JSON.stringify(imageStorage));
+        
         // 构建完整的动态数据
         const newPost = {
             id: postData.id,
@@ -295,7 +330,7 @@ function simulatePostRequest(postData) {
                 department: currentUser.department || '未知学院'
             },
             content: postData.content,
-            images: postData.images,
+            images: postData.images, // 存储图片路径
             time: new Date(),
             likes: 0,
             visibility: postData.visibility,

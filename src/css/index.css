@@ -207,7 +207,7 @@
     background-color: var(--white);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    padding: 20px;
+    padding: 15px;
     margin-bottom: 20px;
 }
 
@@ -280,26 +280,70 @@
 }
 
 .post-images {
-    margin-top: 15px;
+    margin-top: 10px;
+    margin-bottom: 10px;
     border-radius: var(--radius);
     overflow: hidden;
+    max-width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
 }
 
 .post-images img {
-    width: 100%;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    object-position: left;
     border-radius: var(--radius);
 }
 
 .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    display: flex;
+    gap: 0;
+}
+
+.grid-2 img {
+    width: 50%;
+    max-height: 150px;
+    object-position: left;
+}
+
+.grid-2 img:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.grid-2 img:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 .grid-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
+    display: flex;
+    gap: 0;
+}
+
+.grid-3 img {
+    width: 33.333%;
+    max-height: 120px;
+    object-position: left;
+}
+
+.grid-3 img:nth-child(1) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.grid-3 img:nth-child(2) {
+    border-radius: 0;
+}
+
+.grid-3 img:nth-child(3) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 .post-actions {
@@ -491,54 +535,64 @@
 @media (max-width: 768px) {
     .main .container {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 20px;
     }
     
     .sidebar {
         grid-column: 1;
-        grid-row: 4;
-        order: 4;
+        grid-row: auto;
     }
     
     .posts-container {
-        order: 3;
+        grid-column: 1;
     }
     
-    .create-post-module {
-        order: 2;
-    }
-    
-    .content-tabs {
-        position: sticky;
-        top: 60px;
-        z-index: 90;
-        order: 1;
-    }
-    
-    /* 移动端发布动态模块样式优化 */
     .create-post-module {
         margin-bottom: 15px;
     }
     
+    .content-tabs {
+        flex-direction: column;
+    }
+    
+    .tab {
+        padding: 12px 0;
+    }
+    
+    .create-post-module {
+        padding: 15px;
+    }
+    
     .create-post-module .post-input {
         flex-direction: column;
-        align-items: flex-start;
     }
     
     .create-post-module .post-input img {
-        margin-bottom: 10px;
         margin-right: 0;
+        margin-bottom: 10px;
     }
     
     .create-post-module .post-actions {
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 10px;
     }
     
     .create-post-module .post-actions button {
-        flex: 1;
-        min-width: 80px;
-        justify-content: center;
+        flex: none;
+        padding: 8px 12px;
+    }
+    
+    /* 移动端图片大小调整 */
+    .post-images img {
+        max-height: 150px;
+    }
+    
+    .grid-2 img {
+        max-height: 120px;
+    }
+    
+    .grid-3 img {
+        max-height: 100px;
     }
 }
 

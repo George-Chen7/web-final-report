@@ -316,25 +316,38 @@ function createPostHTML(post) {
     // 处理图片展示
     let imagesHTML = '';
     if (post.images && post.images.length > 0) {
-        if (post.images.length === 1) {
+        // 获取图片存储数据
+        const imageStorage = JSON.parse(localStorage.getItem('imageStorage') || '{}');
+        
+        // 处理图片路径，如果是用户上传的图片，从imageStorage中获取
+        const processedImages = post.images.map(imgPath => {
+            // 如果是用户上传的图片路径（以user_uploads开头）
+            if (imgPath.startsWith('user_uploads/')) {
+                return imageStorage[imgPath] || 'src/images/DefaultAvatar.png';
+            }
+            // 如果是本地图片路径，直接使用
+            return imgPath;
+        });
+        
+        if (processedImages.length === 1) {
             imagesHTML = `
                 <div class="post-images">
-                    <img src="${post.images[0]}" alt="动态图片">
+                    <img src="${processedImages[0]}" alt="动态图片">
                 </div>
             `;
-        } else if (post.images.length === 2) {
+        } else if (processedImages.length === 2) {
             imagesHTML = `
                 <div class="post-images grid-2">
-                    <img src="${post.images[0]}" alt="动态图片">
-                    <img src="${post.images[1]}" alt="动态图片">
+                    <img src="${processedImages[0]}" alt="动态图片">
+                    <img src="${processedImages[1]}" alt="动态图片">
                 </div>
             `;
-        } else if (post.images.length >= 3) {
+        } else if (processedImages.length >= 3) {
             imagesHTML = `
                 <div class="post-images grid-3">
-                    <img src="${post.images[0]}" alt="动态图片">
-                    <img src="${post.images[1]}" alt="动态图片">
-                    <img src="${post.images[2]}" alt="动态图片">
+                    <img src="${processedImages[0]}" alt="动态图片">
+                    <img src="${processedImages[1]}" alt="动态图片">
+                    <img src="${processedImages[2]}" alt="动态图片">
                 </div>
             `;
         }
