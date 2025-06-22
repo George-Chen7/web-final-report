@@ -322,43 +322,67 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载用户资料
     function loadUserProfile() {
-        // 从clickUser获取用户资料
-        const user = clickUser;
+        if (!clickUser) return;
         
-        // 更新页面显示
-        profileName.textContent = user.nickname || user.name;
-        profileId.textContent = `学号：${user.studentId}`;
+        // 更新页面标题
+        document.title = `${clickUser.nickname || clickUser.username} 的个人资料 - 荔荔社区`;
         
-        if (user.avatar) {
-            profileAvatar.src = user.avatar;
+        // 更新个人资料信息
+        profileName.textContent = clickUser.nickname || clickUser.username;
+        profileId.textContent = `学号：${clickUser.studentId || '未知'}`;
+        
+        // 更新头像
+        if (clickUser.avatar) {
+            profileAvatar.src = clickUser.avatar;
             if (userAvatar) {
-                userAvatar.src = user.avatar;
+                userAvatar.src = clickUser.avatar;
+            }
+        } else {
+            profileAvatar.src = 'src/images/DefaultAvatar.png';
+            if (userAvatar) {
+                userAvatar.src = 'src/images/DefaultAvatar.png';
             }
         }
         
-        if (user.cover) {
-            profileCover.src = user.cover;
+        // 更新封面图（如果有的话）
+        if (clickUser.coverImage) {
+            profileCover.src = clickUser.coverImage;
+        } else {
+            profileCover.src = 'src/images/DefaultAvatar.png';
+        }
+        
+        // 根据是否访问自己的主页来更新标签文本
+        const postsTab = document.querySelector('.profile-tabs li[data-tab="posts"]');
+        if (postsTab) {
+            if (isOwnProfile) {
+                postsTab.textContent = '我的动态';
+            } else {
+                postsTab.textContent = 'TA的动态';
+            }
+        }
+        
+        // 根据是否访问自己的主页来控制编辑按钮的显示
+        if (editProfileBtn) {
+            if (isOwnProfile) {
+                editProfileBtn.style.display = 'block';
+            } else {
+                editProfileBtn.style.display = 'none';
+            }
+        }
+        
+        // 根据是否访问自己的主页来控制头像和封面的编辑按钮
+        if (editAvatarBtn) {
+            editAvatarBtn.style.display = isOwnProfile ? 'flex' : 'none';
+        }
+        if (editCoverBtn) {
+            editCoverBtn.style.display = isOwnProfile ? 'block' : 'none';
         }
         
         // 更新统计数据（动态数量由loadUserPosts更新，关注和粉丝数由loadFollowLists更新）
-        postCount.textContent = user.postCount || '0';
+        postCount.textContent = clickUser.postCount || '0';
         
-        // 根据是否访问自己的主页来控制编辑按钮的显示
-        const editProfileBtn = document.getElementById('editProfileBtn');
-        const editAvatarBtn = document.getElementById('editAvatarBtn');
-        const editCoverBtn = document.getElementById('editCoverBtn');
-        
-        if (isOwnProfile) {
-            // 自己的主页，显示编辑按钮
-            if (editProfileBtn) editProfileBtn.style.display = 'block';
-            if (editAvatarBtn) editAvatarBtn.style.display = 'block';
-            if (editCoverBtn) editCoverBtn.style.display = 'block';
-        } else {
-            // 他人的主页，隐藏编辑按钮
-            if (editProfileBtn) editProfileBtn.style.display = 'none';
-            if (editAvatarBtn) editAvatarBtn.style.display = 'none';
-            if (editCoverBtn) editCoverBtn.style.display = 'none';
-        }
+        // 更新关注和粉丝数
+        loadFollowLists();
     }
     
     // 填充编辑表单
@@ -418,8 +442,50 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadUserPosts() {
         // 获取所有动态
         const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
+        
+        // 获取当前用户信息
+        const currentUser = JSON.parse(localStorage.getItem('currentUser')) || { role: 'guest' };
+        
         // 只筛选clickUser发布的动态
-        const userPosts = allPosts.filter(post => post.user && (post.user.id === clickUser.id || post.user.name === clickUser.username));
+        let userPosts = allPosts.filter(post => post.user && (post.user.id === clickUser.id || post.user.name === clickUser.username));
+        
+        // 根据可见性过滤动态
+        userPosts = userPosts.filter(post => {
+            // 如果是访问自己的主页，显示所有动态
+            if (isOwnProfile) {
+                return true;
+            }
+            
+            // 如果是游客，只能看到公开的动态
+            if (currentUser.role === 'guest') {
+                return post.visibility === 'public';
+            }
+            
+            // 根据可见性判断
+            switch (post.visibility) {
+                case 'public':
+                    return true; // 公开动态所有人都能看到
+                case 'followers':
+                    // 粉丝可见：检查当前用户是否是clickUser的粉丝
+                    // 通过检查其他用户的following数组中是否包含clickUser的ID，且该用户是currentUser
+                    const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+                    const clickUserId = String(clickUser.id);
+                    const isFollower = userList.some(user => {
+                        // 检查是否是currentUser
+                        if (String(user.id) !== String(currentUser.id) && user.username !== currentUser.username) {
+                            return false;
+                        }
+                        // 检查该用户的following数组是否包含clickUser
+                        return user.following && user.following.some(id => String(id) === clickUserId);
+                    });
+                    return isFollower;
+                case 'private':
+                    return false; // 私密动态只有作者能看到
+                default:
+                    return true; // 默认公开
+            }
+        });
+        
         // 渲染动态列表
         userPostList.innerHTML = '';
         if (userPosts.length === 0) {
@@ -431,23 +497,119 @@ document.addEventListener('DOMContentLoaded', function() {
                 const postElement = document.createElement('div');
                 postElement.className = 'post-item';
                 postElement.setAttribute('data-post-id', post.id);
+                
+                // 处理图片展示
+                let imagesHTML = '';
+                if (post.images && post.images.length > 0) {
+                    if (post.images.length === 1) {
+                        imagesHTML = `
+                            <div class="post-images">
+                                <img src="${post.images[0]}" alt="动态图片">
+                            </div>
+                        `;
+                    } else if (post.images.length === 2) {
+                        imagesHTML = `
+                            <div class="post-images grid-2">
+                                <img src="${post.images[0]}" alt="动态图片">
+                                <img src="${post.images[1]}" alt="动态图片">
+                            </div>
+                        `;
+                    } else if (post.images.length >= 3) {
+                        imagesHTML = `
+                            <div class="post-images grid-3">
+                                <img src="${post.images[0]}" alt="动态图片">
+                                <img src="${post.images[1]}" alt="动态图片">
+                                <img src="${post.images[2]}" alt="动态图片">
+                            </div>
+                        `;
+                    }
+                }
+                
+                // 处理评论展示
+                let commentsHTML = '';
+                if (post.comments && post.comments.length > 0) {
+                    commentsHTML = '<div class="post-comments">';
+                    post.comments.forEach(comment => {
+                        // 兼容两种数据结构
+                        const commentUser = comment.user || {
+                            name: comment.nickname || comment.username,
+                            avatar: comment.avatar
+                        };
+                        const commentTime = comment.time || comment.publishTime;
+                        
+                        commentsHTML += `
+                            <div class="comment-item">
+                                <div class="comment-avatar">
+                                    <img src="${commentUser.avatar || 'src/images/DefaultAvatar.png'}" alt="用户头像">
+                                </div>
+                                <div class="comment-content">
+                                    <div class="comment-author">${commentUser.name}</div>
+                                    <div class="comment-text">${comment.content}</div>
+                                    <div class="comment-time">${formatTime(commentTime)}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    commentsHTML += '</div>';
+                }
+                
+                // 格式化内容，处理换行和话题标签
+                const formattedContent = post.content
+                    .replace(/\n/g, '</p><p>')
+                    .replace(/#(\S+)/g, '<a href="#" class="topic-tag">#$1</a>');
+                
+                // 可见性标识
+                let visibilityIcon = '';
+                let visibilityText = '';
+                switch (post.visibility) {
+                    case 'public':
+                        visibilityIcon = '<i class="bi bi-globe"></i>';
+                        visibilityText = '公开';
+                        break;
+                    case 'followers':
+                        visibilityIcon = '<i class="bi bi-people"></i>';
+                        visibilityText = '粉丝可见';
+                        break;
+                    case 'private':
+                        visibilityIcon = '<i class="bi bi-lock"></i>';
+                        visibilityText = '私密';
+                        break;
+                    default:
+                        visibilityIcon = '<i class="bi bi-globe"></i>';
+                        visibilityText = '公开';
+                }
+                
                 postElement.innerHTML = `
                     <div class="post-header">
                         <div class="post-avatar">
-                            <img src="${post.user.avatar}" alt="头像">
+                            <img src="${post.user.avatar || 'src/images/DefaultAvatar.png'}" alt="头像">
                         </div>
                         <div class="post-author">
                             <div class="post-author-name">${post.user.nickname || post.user.name}</div>
-                            <div class="post-time">${formatTime(post.time)}</div>
+                            <div class="post-time">
+                                ${formatTime(post.time)}
+                                <span class="visibility-badge" title="${visibilityText}">
+                                    ${visibilityIcon} ${visibilityText}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div class="post-content">
-                        <div class="post-text">${post.content}</div>
+                        <div class="post-text">${formattedContent}</div>
+                        ${imagesHTML}
+                    </div>
+                    <div class="post-footer">
+                        <div class="post-stats">
+                            <span class="post-stat"><i class="bi bi-heart"></i> ${post.likes || 0}</span>
+                            <span class="post-stat"><i class="bi bi-chat"></i> ${post.comments ? post.comments.length : 0}</span>
+                        </div>
+                        ${commentsHTML}
                     </div>
                 `;
                 userPostList.appendChild(postElement);
             });
         }
+        
         // 同步动态数量
         postCount.textContent = userPosts.length;
     }
