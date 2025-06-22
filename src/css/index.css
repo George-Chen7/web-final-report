@@ -492,3 +492,51 @@
         justify-content: center;
     }
 }
+
+/* 关注按钮样式 */
+.btn-follow {
+    padding: 6px 16px;
+    border: 1px solid var(--primary-color);
+    background: transparent;
+    color: var(--primary-color);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.btn-follow:hover {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.btn-follow.following {
+    background: #e0e0e0;
+    border-color: #e0e0e0;
+    color: #666;
+}
+
+.btn-follow.following:hover {
+    background: #d0d0d0;
+    border-color: #d0d0d0;
+    color: #555;
+}
+
+/* 删除按钮样式 */
+.btn-delete {
+    padding: 6px 16px;
+    border: 1px solid var(--primary-color);
+    background: transparent;
+    color: var(--primary-color);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.btn-delete:hover {
+    background: var(--primary-color);
+    color: var(--white);
+}

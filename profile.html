@@ -171,8 +171,24 @@
                         
                         <!-- 好友 -->
                         <div class="tab-pane" id="friendsTab">
-                            <div class="friends-list" id="userFriendsList">
-                                <!-- 好友列表将通过JavaScript动态生成 -->
+                            <!-- 关注和粉丝列表 -->
+                            <div class="follow-lists">
+                                <div class="list-tabs">
+                                    <button class="tab active" data-tab="following">关注 <span class="following-count">0</span></button>
+                                    <button class="tab" data-tab="followers">粉丝 <span class="followers-count">0</span></button>
+                                </div>
+                                
+                                <div class="list-content">
+                                    <!-- 关注列表 -->
+                                    <div class="user-list following-list active">
+                                        <!-- 关注用户列表由JS渲染 -->
+                                    </div>
+                                    
+                                    <!-- 粉丝列表 -->
+                                    <div class="user-list followers-list">
+                                        <!-- 粉丝用户列表由JS渲染 -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

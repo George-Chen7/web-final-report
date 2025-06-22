@@ -83,7 +83,7 @@
 }
 
 .btn-delete {
-    background-color: var(--error-color);
+    background-color: var(--primary-color);
     color: var(--white);
     border-radius: 20px;
     padding: 4px 12px;
@@ -94,7 +94,7 @@
 }
 
 .btn-delete:hover {
-    background-color: #d32f2f;
+    background-color: var(--primary-dark);
 }
 
 /* 表单元素 */

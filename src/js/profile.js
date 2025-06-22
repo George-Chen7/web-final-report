@@ -73,6 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 加载用户好友
     loadUserFriends();
     
+    // 加载关注和粉丝列表
+    loadFollowLists();
+    
     // 标签页切换
     const tabItems = document.querySelectorAll('.profile-tabs li');
     const tabPanes = document.querySelectorAll('.tab-pane');
@@ -88,6 +91,24 @@ document.addEventListener('DOMContentLoaded', function() {
             // 设置当前标签页为活动状态
             this.classList.add('active');
             document.getElementById(`${tabId}Tab`).classList.add('active');
+        });
+    });
+    
+    // 关注列表标签页切换
+    const followTabs = document.querySelectorAll('.list-tabs .tab');
+    const followLists = document.querySelectorAll('.user-list');
+    
+    followTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabType = this.getAttribute('data-tab');
+            
+            // 移除所有标签的活动状态
+            followTabs.forEach(t => t.classList.remove('active'));
+            followLists.forEach(list => list.classList.remove('active'));
+            
+            // 设置当前标签为活动状态
+            this.classList.add('active');
+            document.querySelector(`.${tabType}-list`).classList.add('active');
         });
     });
     
@@ -697,6 +718,217 @@ document.addEventListener('DOMContentLoaded', function() {
             
             userFriendsList.appendChild(friendElement);
         });
+    }
+    
+    // 加载关注和粉丝列表
+    function loadFollowLists() {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) return;
+        
+        // 获取所有用户数据
+        const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+        
+        // 加载关注列表
+        loadFollowingList(currentUser, userList);
+        
+        // 加载粉丝列表
+        loadFollowersList(currentUser, userList);
+        
+        // 更新关注和粉丝数量
+        updateFollowCounts(currentUser, userList);
+    }
+    
+    // 加载关注列表
+    function loadFollowingList(currentUser, userList) {
+        const followingList = document.querySelector('.following-list');
+        if (!followingList) return;
+        
+        const following = currentUser.following || [];
+        
+        if (following.length === 0) {
+            followingList.innerHTML = '<div class="empty-state">还没有关注任何人</div>';
+            return;
+        }
+        
+        let followingHTML = '';
+        following.forEach(userId => {
+            const user = userList.find(u => String(u.id) === String(userId));
+            if (user) {
+                followingHTML += `
+                    <div class="user-item">
+                        <div class="user-avatar">
+                            <img src="${user.avatar || 'src/images/DefaultAvatar.png'}" alt="${user.nickname || user.username}">
+                        </div>
+                        <div class="user-info">
+                            <h4>${user.nickname || user.username}</h4>
+                            <p>${user.studentId || ''}</p>
+                        </div>
+                        <div class="user-actions">
+                            <button class="btn btn-outline btn-unfollow" data-user-id="${user.id}">取消关注</button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        followingList.innerHTML = followingHTML;
+        
+        // 绑定取消关注事件
+        bindUnfollowEvents();
+    }
+    
+    // 加载粉丝列表
+    function loadFollowersList(currentUser, userList) {
+        const followersList = document.querySelector('.followers-list');
+        if (!followersList) return;
+        
+        // 查找所有关注了当前用户的用户
+        const followers = userList.filter(user => 
+            user.followers && user.followers.includes(currentUser.id)
+        );
+        
+        if (followers.length === 0) {
+            followersList.innerHTML = '<div class="empty-state">还没有粉丝</div>';
+            return;
+        }
+        
+        let followersHTML = '';
+        followers.forEach(user => {
+            const isFollowing = currentUser.following && currentUser.following.includes(user.id);
+            followersHTML += `
+                <div class="user-item">
+                    <div class="user-avatar">
+                        <img src="${user.avatar || 'src/images/DefaultAvatar.png'}" alt="${user.nickname || user.username}">
+                    </div>
+                    <div class="user-info">
+                        <h4>${user.nickname || user.username}</h4>
+                        <p>${user.studentId || ''}</p>
+                    </div>
+                    <div class="user-actions">
+                        ${isFollowing ? 
+                            '<button class="btn btn-outline btn-unfollow" data-user-id="' + user.id + '">取消关注</button>' :
+                            '<button class="btn btn-primary btn-follow" data-user-id="' + user.id + '">关注</button>'
+                        }
+                    </div>
+                </div>
+            `;
+        });
+        
+        followersList.innerHTML = followersHTML;
+        
+        // 绑定关注/取消关注事件
+        bindFollowEvents();
+    }
+    
+    // 更新关注和粉丝数量
+    function updateFollowCounts(currentUser, userList) {
+        const followingCount = currentUser.following ? currentUser.following.length : 0;
+        const followersCount = userList.filter(user => 
+            user.followers && user.followers.includes(currentUser.id)
+        ).length;
+        
+        // 更新页面上的数量显示
+        const followingElements = document.querySelectorAll('.following-count');
+        const followersElements = document.querySelectorAll('.followers-count');
+        
+        followingElements.forEach(el => el.textContent = followingCount);
+        followersElements.forEach(el => el.textContent = followersCount);
+    }
+    
+    // 绑定取消关注事件
+    function bindUnfollowEvents() {
+        const unfollowButtons = document.querySelectorAll('.btn-unfollow');
+        unfollowButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                unfollowUser(userId);
+            });
+        });
+    }
+    
+    // 绑定关注事件
+    function bindFollowEvents() {
+        const followButtons = document.querySelectorAll('.btn-follow');
+        followButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                followUser(userId);
+            });
+        });
+    }
+    
+    // 取消关注用户
+    function unfollowUser(userId) {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) return;
+        
+        let userList = JSON.parse(localStorage.getItem('userList') || '[]');
+        
+        // 找到当前用户和目标用户
+        const currentUserIndex = userList.findIndex(user => String(user.id) === String(currentUser.id));
+        const targetUserIndex = userList.findIndex(user => String(user.id) === String(userId));
+        
+        if (currentUserIndex === -1 || targetUserIndex === -1) {
+            showMessage('用户信息不存在', 'error');
+            return;
+        }
+        
+        const currentUserData = userList[currentUserIndex];
+        const targetUserData = userList[targetUserIndex];
+        
+        // 取消关注
+        currentUserData.following = currentUserData.following.filter(id => id !== userId);
+        targetUserData.followers = targetUserData.followers.filter(id => id !== currentUser.id);
+        
+        // 更新用户列表
+        localStorage.setItem('userList', JSON.stringify(userList));
+        
+        // 更新当前用户信息
+        localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+        
+        // 重新加载关注列表
+        loadFollowLists();
+        
+        showMessage('已取消关注', 'success');
+    }
+    
+    // 关注用户
+    function followUser(userId) {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) return;
+        
+        let userList = JSON.parse(localStorage.getItem('userList') || '[]');
+        
+        // 找到当前用户和目标用户
+        const currentUserIndex = userList.findIndex(user => String(user.id) === String(currentUser.id));
+        const targetUserIndex = userList.findIndex(user => String(user.id) === String(userId));
+        
+        if (currentUserIndex === -1 || targetUserIndex === -1) {
+            showMessage('用户信息不存在', 'error');
+            return;
+        }
+        
+        const currentUserData = userList[currentUserIndex];
+        const targetUserData = userList[targetUserIndex];
+        
+        // 确保关注列表和粉丝列表存在
+        if (!currentUserData.following) currentUserData.following = [];
+        if (!targetUserData.followers) targetUserData.followers = [];
+        
+        // 添加关注
+        currentUserData.following.push(userId);
+        targetUserData.followers.push(currentUser.id);
+        
+        // 更新用户列表
+        localStorage.setItem('userList', JSON.stringify(userList));
+        
+        // 更新当前用户信息
+        localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+        
+        // 重新加载关注列表
+        loadFollowLists();
+        
+        showMessage('关注成功', 'success');
     }
     
     // 格式化内容（处理话题标签等）
