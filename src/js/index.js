@@ -270,11 +270,15 @@ function createPostHTML(post) {
         actionButtonHTML = `<button class="btn-delete" data-post-id="${post.id}">删除</button>`;
     } else {
         // 如果不是当前用户发布的动态，显示关注按钮
-        const isFollowing = currentUser && currentUser.following && currentUser.following.includes(post.user.id);
+        // 检查关注状态：通过用户ID或用户名判断
+        const isFollowing = currentUser && currentUser.following && (
+            currentUser.following.includes(post.user.id) || 
+            currentUser.following.includes(post.user.name)
+        );
         const buttonText = isFollowing ? '已关注' : '关注';
         const buttonClass = isFollowing ? 'btn-follow following' : 'btn-follow';
         const buttonStyle = isFollowing ? 'style="background-color: #e0e0e0; color: #666;"' : '';
-        actionButtonHTML = `<button class="${buttonClass}" data-user-id="${post.user.id}" ${buttonStyle}>${buttonText}</button>`;
+        actionButtonHTML = `<button class="${buttonClass}" data-user-id="${post.user.id}" data-user-name="${post.user.name}" ${buttonStyle}>${buttonText}</button>`;
     }
     
     // 处理图片展示
@@ -501,6 +505,7 @@ function initPostInteractions() {
                 return;
             }
             const userId = this.getAttribute('data-user-id');
+            const userName = this.getAttribute('data-user-name');
             toggleFollow(userId, this);
         });
     });
@@ -856,21 +861,31 @@ function toggleFollow(userId, button) {
     if (!currentUserData.following) currentUserData.following = [];
     if (!targetUserData.followers) targetUserData.followers = [];
     
-    // 检查是否已经关注
-    const isFollowing = currentUserData.following.includes(userId);
+    // 检查是否已经关注（同时检查用户ID和用户名）
+    const isFollowing = currentUserData.following.includes(userId) || 
+                       currentUserData.following.includes(targetUserData.username);
     
     if (isFollowing) {
-        // 取消关注
-        currentUserData.following = currentUserData.following.filter(id => id !== userId);
+        // 取消关注（移除用户ID和用户名）
+        currentUserData.following = currentUserData.following.filter(id => 
+            id !== userId && id !== targetUserData.username
+        );
         targetUserData.followers = targetUserData.followers.filter(id => id !== currentUser.id);
         
         button.textContent = '关注';
         button.classList.remove('following');
         alert('已取消关注');
     } else {
-        // 添加关注
-        currentUserData.following.push(userId);
-        targetUserData.followers.push(currentUser.id);
+        // 添加关注（同时添加用户ID和用户名）
+        if (!currentUserData.following.includes(userId)) {
+            currentUserData.following.push(userId);
+        }
+        if (!currentUserData.following.includes(targetUserData.username)) {
+            currentUserData.following.push(targetUserData.username);
+        }
+        if (!targetUserData.followers.includes(currentUser.id)) {
+            targetUserData.followers.push(currentUser.id);
+        }
         
         button.textContent = '已关注';
         button.classList.add('following');
@@ -888,6 +903,11 @@ function toggleFollow(userId, button) {
     
     // 更新关注数量显示
     updateFollowCounts();
+    
+    // 重新渲染所有动态，确保所有相关帖子的关注状态都得到更新
+    const activeTab = document.querySelector('.content-tabs .tab.active');
+    const tabType = activeTab ? activeTab.dataset.tab : 'all';
+    loadPosts(tabType);
 }
 
 /**
@@ -972,7 +992,10 @@ function getFollowersList(username) {
 function isFollowingUser(userId) {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser || !currentUser.following) return false;
-    return currentUser.following.includes(userId);
+    
+    // 同时检查用户ID和用户名
+    return currentUser.following.includes(userId) || 
+           currentUser.following.includes(userId.toString());
 }
 
 /**
