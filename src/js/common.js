@@ -125,19 +125,25 @@ function checkLoginStatus() {
     // 模拟从localStorage获取用户信息
     let userInfo = localStorage.getItem('currentUser');
     let user = null;
+    
     if (userInfo) {
         user = JSON.parse(userInfo);
         // 判断管理员
         if (user.username === 'admin') {
             user.role = 'admin';
-        } else {
+        } else if (user.username) {
+            // 有用户名的用户
             user.role = 'user';
+        } else {
+            // 没有用户名的用户（可能是游客），清除localStorage
+            localStorage.removeItem('currentUser');
+            user = { role: 'guest' };
         }
     } else {
-        // 未登录，设置为游客
+        // 未登录，设置为游客（不保存到localStorage）
         user = { role: 'guest' };
-        localStorage.setItem('currentUser', JSON.stringify(user));
     }
+    
     if (user.role === 'guest') {
         updateUIForGuest();
     } else {
@@ -313,8 +319,8 @@ function formatTime(date) {
  * 退出登录
  */
 function logout() {
-    // 退出后currentUser写为游客
-    localStorage.setItem('currentUser', JSON.stringify({ role: 'guest' }));
+    // 清除localStorage中的用户信息
+    localStorage.removeItem('currentUser');
     // 更新UI为游客状态
     updateUIForGuest();
     // 可选：跳转到首页或刷新页面
