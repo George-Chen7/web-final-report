@@ -329,6 +329,11 @@ function createPostHTML(post) {
     const likeIconClass = isLiked ? 'bi-heart-fill' : 'bi-heart';
     const likeButtonClass = isLiked ? 'btn-like active' : 'btn-like';
     
+    // 检查当前用户是否已收藏此动态
+    const isBookmarked = post.bookmarkedBy && post.bookmarkedBy.includes(currentUser?.username);
+    const bookmarkIconClass = isBookmarked ? 'bi-bookmark-fill' : 'bi-bookmark';
+    const bookmarkButtonClass = isBookmarked ? 'btn-bookmark active' : 'btn-bookmark';
+    
     // 处理图片展示
     let imagesHTML = '';
     if (post.images && post.images.length > 0) {
@@ -475,7 +480,7 @@ function createPostHTML(post) {
                 <button class="${likeButtonClass}"><i class="bi ${likeIconClass}"></i> 点赞 <span>${post.likes}</span></button>
                 <button class="btn-comment"><i class="bi bi-chat"></i> 评论 <span>${post.comments.length}</span></button>
                 <button class="btn-share"><i class="bi bi-share"></i> 分享</button>
-                <button class="btn-bookmark"><i class="bi bi-bookmark"></i> 收藏</button>
+                <button class="${bookmarkButtonClass}"><i class="bi ${bookmarkIconClass}"></i> 收藏 <span>${post.bookmarkedBy ? post.bookmarkedBy.length : 0}</span></button>
             </div>
             <div class="post-comments"><!-- 默认不加show类，收起 --></div>
         </article>
@@ -737,12 +742,13 @@ function initPostInteractions() {
         const newBtn = button.cloneNode(true);
         button.parentNode.replaceChild(newBtn, button);
         newBtn.addEventListener('click', function(e) {
-            if (currentUser && currentUser.role === 'guest') {
-                e.preventDefault();
+            e.preventDefault();
+            if (!currentUser || currentUser.role === 'guest') {
                 alert('请先登录后才能收藏');
                 return;
             }
-            // ... 这里可加收藏逻辑 ...
+            const postId = this.closest('.post-item').getAttribute('data-post-id');
+            toggleBookmark(postId);
         });
     });
 }
@@ -1448,4 +1454,59 @@ function handleCheckin() {
     } else {
         alert('签到成功！');
     }
+}
+
+/**
+ * 切换收藏状态
+ * @param {string} postId - 动态ID
+ */
+function toggleBookmark(postId) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser || currentUser.role === 'guest') {
+        alert('请先登录后才能收藏');
+        return;
+    }
+    
+    // 获取动态数据
+    let posts = JSON.parse(localStorage.getItem('postList')) || [];
+    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
+    
+    if (postIndex === -1) {
+        alert('动态不存在');
+        return;
+    }
+    
+    const post = posts[postIndex];
+    
+    // 初始化收藏用户列表
+    if (!post.bookmarkedBy) {
+        post.bookmarkedBy = [];
+    }
+    
+    // 检查用户是否已经收藏
+    const isBookmarked = post.bookmarkedBy.includes(currentUser.username);
+    
+    if (isBookmarked) {
+        // 用户已收藏，取消收藏
+        post.bookmarkedBy = post.bookmarkedBy.filter(username => username !== currentUser.username);
+        alert('已取消收藏');
+    } else {
+        // 用户未收藏，添加收藏
+        post.bookmarkedBy.push(currentUser.username);
+        alert('收藏成功！');
+    }
+    
+    // 保存到localStorage
+    localStorage.setItem('postList', JSON.stringify(posts));
+    
+    // 重新渲染动态以更新收藏状态
+    renderPosts();
+}
+
+/**
+ * 重新渲染动态列表
+ */
+function renderPosts() {
+    // 重新加载当前标签页的动态
+    loadPosts(currentTabType, false);
 }

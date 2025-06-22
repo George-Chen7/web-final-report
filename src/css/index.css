@@ -778,3 +778,21 @@
     transform: scale(1.05);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
+
+/* 收藏按钮样式 */
+.btn-bookmark {
+    color: var(--text-light);
+    transition: var(--transition);
+}
+
+.btn-bookmark:hover {
+    color: var(--primary-color);
+}
+
+.btn-bookmark.active {
+    color: var(--primary-color);
+}
+
+.btn-bookmark.active i {
+    color: var(--primary-color);
+}

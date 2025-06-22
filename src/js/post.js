@@ -350,6 +350,8 @@ function simulatePostRequest(postData) {
             topics: postData.topics, // 存储话题标签
             time: new Date(),
             likes: 0,
+            likedBy: [], // 点赞用户列表
+            bookmarkedBy: [], // 收藏用户列表
             visibility: postData.visibility,
             comments: []
         };

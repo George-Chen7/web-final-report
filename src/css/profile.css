@@ -1286,3 +1286,29 @@
 .btn-delete-post i {
     font-size: 14px;
 }
+
+/* 个人主页收藏按钮样式 */
+.post-bookmark-btn {
+    color: var(--text-light);
+    transition: var(--transition);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.post-bookmark-btn:hover {
+    color: var(--primary-color);
+}
+
+.post-bookmark-btn.active {
+    color: var(--primary-color);
+}
+
+.post-bookmark-btn.active i {
+    color: var(--primary-color);
+}
+
+.post-bookmark-btn i {
+    color: inherit;
+}

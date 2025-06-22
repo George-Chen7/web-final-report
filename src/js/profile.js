@@ -625,6 +625,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const likeIconClass = isLiked ? 'bi-heart-fill' : 'bi-heart';
                 const likeButtonClass = isLiked ? 'post-like-btn active' : 'post-like-btn';
                 
+                // 检查当前用户是否已收藏此动态
+                const isBookmarked = post.bookmarkedBy && post.bookmarkedBy.includes(currentUser?.username);
+                const bookmarkIconClass = isBookmarked ? 'bi-bookmark-fill' : 'bi-bookmark';
+                const bookmarkButtonClass = isBookmarked ? 'post-bookmark-btn active' : 'post-bookmark-btn';
+                
             postElement.innerHTML = `
                 <div class="post-header">
                     <div class="post-avatar">
@@ -649,6 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="post-stats">
                             <span class="${likeButtonClass}" data-post-id="${post.id}" style="cursor: pointer;"><i class="bi ${likeIconClass}"></i> ${post.likes || 0}</span>
                             <span class="post-stat post-comment-btn" style="cursor: pointer;"><i class="bi bi-chat"></i> ${post.comments ? post.comments.length : 0}</span>
+                            <span class="${bookmarkButtonClass}" data-post-id="${post.id}" style="cursor: pointer;"><i class="bi ${bookmarkIconClass}"></i> ${post.bookmarkedBy ? post.bookmarkedBy.length : 0}</span>
                     </div>
                     </div>
                     <div class="post-comments"><!-- 默认收起，点击评论按钮后展开 --></div>
@@ -910,6 +916,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 const postId = parseInt(this.getAttribute('data-post-id'));
                 toggleProfileLike(postId);
+            });
+        });
+        
+        // 收藏按钮点击事件
+        const bookmarkButtons = document.querySelectorAll('.post-bookmark-btn');
+        bookmarkButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!currentUser || currentUser.role === 'guest') {
+                    alert('请先登录后才能收藏');
+                    return;
+                }
+                const postId = this.getAttribute('data-post-id');
+                toggleProfileBookmark(postId);
             });
         });
         
@@ -1330,5 +1350,76 @@ function updateProfileLikeButton(postId, likeCount, isLiked) {
         likeButton.classList.add('active');
     } else {
         likeButton.classList.remove('active');
+    }
+}
+
+/**
+ * 切换个人主页动态收藏状态
+ * @param {string} postId - 动态ID
+ */
+function toggleProfileBookmark(postId) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser || currentUser.role === 'guest') {
+        alert('请先登录后才能收藏');
+        return;
+    }
+    
+    // 获取动态数据
+    let posts = JSON.parse(localStorage.getItem('postList')) || [];
+    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
+    
+    if (postIndex === -1) {
+        alert('动态不存在');
+        return;
+    }
+    
+    const post = posts[postIndex];
+    
+    // 初始化收藏用户列表
+    if (!post.bookmarkedBy) {
+        post.bookmarkedBy = [];
+    }
+    
+    // 检查用户是否已经收藏
+    const isBookmarked = post.bookmarkedBy.includes(currentUser.username);
+    
+    if (isBookmarked) {
+        // 用户已收藏，取消收藏
+        post.bookmarkedBy = post.bookmarkedBy.filter(username => username !== currentUser.username);
+        alert('已取消收藏');
+    } else {
+        // 用户未收藏，添加收藏
+        post.bookmarkedBy.push(currentUser.username);
+        alert('收藏成功！');
+    }
+    
+    // 保存到localStorage
+    localStorage.setItem('postList', JSON.stringify(posts));
+    
+    // 直接更新收藏按钮状态
+    updateProfileBookmarkButton(postId, post.bookmarkedBy.length, !isBookmarked);
+}
+
+/**
+ * 更新个人主页收藏按钮状态
+ * @param {string} postId - 动态ID
+ * @param {number} bookmarkCount - 收藏数
+ * @param {boolean} isBookmarked - 是否已收藏
+ */
+function updateProfileBookmarkButton(postId, bookmarkCount, isBookmarked) {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (!postElement) return;
+    
+    const bookmarkButton = postElement.querySelector('.post-bookmark-btn');
+    if (!bookmarkButton) return;
+    
+    // 更新收藏数
+    bookmarkButton.innerHTML = `<i class="bi ${isBookmarked ? 'bi-bookmark-fill' : 'bi-bookmark'}"></i> ${bookmarkCount || 0}`;
+    
+    // 更新收藏状态
+    if (isBookmarked) {
+        bookmarkButton.classList.add('active');
+    } else {
+        bookmarkButton.classList.remove('active');
     }
 }
