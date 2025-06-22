@@ -144,12 +144,12 @@ function handleImageUpload(e) {
         reader.onload = function(e) {
             img.src = e.target.result;
             
-            // 生成图片路径并存储
+            // 生成图片路径并存储（同时存储路径和base64数据）
             const imagePath = generateImagePath(file);
             uploadedImages.push({
                 path: imagePath,
                 file: file,
-                preview: e.target.result
+                preview: e.target.result  // 存储base64数据
             });
         };
         reader.readAsDataURL(file);
@@ -328,10 +328,10 @@ function simulatePostRequest(postData) {
         // 获取当前用户信息
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         
-        // 存储图片数据到localStorage（仅用于演示）
+        // 存储图片数据到localStorage（同时存储路径和base64数据）
         const imageStorage = JSON.parse(localStorage.getItem('imageStorage') || '{}');
         uploadedImages.forEach(img => {
-            imageStorage[img.path] = img.preview;
+            imageStorage[img.path] = img.preview;  // 存储base64数据
         });
         localStorage.setItem('imageStorage', JSON.stringify(imageStorage));
         
