@@ -100,7 +100,7 @@ function getPostsData(type) {
                     department: '计算机学院'
                 },
                 content: '期末复习攻略分享！#期末复习 #学习方法\n1. 制定合理的复习计划，分配每天的学习任务\n2. 整理笔记和重点知识点，制作思维导图\n3. 多做习题，找出自己的薄弱环节\n4. 保持良好的作息，确保充足的睡眠',
-                images: ['src/images/post-img-1.svg'],
+                images: ['src/images/DefaultAvatar.png'],
                 time: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2小时前
                 likes: 42,
                 comments: [
@@ -126,7 +126,7 @@ function getPostsData(type) {
                     department: '艺术学院'
                 },
                 content: '校园的春天真美！分享几张今天拍的照片 #校园风光 #摄影',
-                images: ['src/images/post-img-2.svg', 'src/images/post-img-3.svg'],
+                images: ['src/images/DefaultAvatar.png', 'src/images/DefaultAvatar.png'],
                 time: new Date(Date.now() - 24 * 60 * 60 * 1000), // 昨天
                 likes: 78,
                 comments: []
@@ -140,7 +140,7 @@ function getPostsData(type) {
                     department: '音乐学院'
                 },
                 content: '校园歌手大赛开始报名啦！欢迎所有热爱音乐的同学参加 #校园活动 #音乐\n时间：5月20日-6月10日\n地点：大学生活动中心\n报名方式：扫描下方二维码或到学生会办公室登记',
-                images: ['src/images/post-img-4.svg'],
+                images: ['src/images/DefaultAvatar.png'],
                 time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3天前
                 likes: 156,
                 comments: []

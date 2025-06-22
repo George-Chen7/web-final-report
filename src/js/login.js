@@ -12,7 +12,7 @@
             nickname: 'admin',
             password: '88888888',
             interestTags: [],
-            avatar: '',
+            avatar: 'src/images/DefaultAvatar.png',
             id: Date.now(),
             banned: false
         });

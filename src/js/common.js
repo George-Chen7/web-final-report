@@ -167,8 +167,8 @@ function updateUIForLoggedInUser(user) {
         
         // 更新头像
         const avatarImg = userInfoElement.querySelector('.avatar img');
-        if (avatarImg && user.avatar) {
-            avatarImg.src = user.avatar;
+        if (avatarImg) {
+            avatarImg.src = user.avatar || 'src/images/DefaultAvatar.png';
         }
     }
     

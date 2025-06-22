@@ -39,6 +39,7 @@
 - 主要键：
   - `userList`：所有用户的数组
   - `currentUser`：当前已登录用户对象
+  - `userPosts_{userId}`：用户动态数据（JSON格式）
 - 每次进入登录/注册页面时，自动初始化管理员账号（admin/88888888，学号1111111111），不会覆盖已有数据。
 
 ### 2. 模拟数据库（server/user-db.json）
@@ -56,6 +57,35 @@
   "avatar": "...",             // 头像URL
   "interestTags": ["学习", "运动"], // 兴趣标签
   "token": "simulated_token_1750516625142" // 模拟登录令牌
+}
+```
+
+### 4. 动态数据结构（JSON格式）
+```json
+{
+  "id": 1,                                    // 动态唯一ID
+  "userId": 1750516625142,                   // 发布者用户ID
+  "username": "admin",                       // 发布者用户名
+  "nickname": "管理员",                      // 发布者昵称
+  "avatar": "src/images/DefaultAvatar.png",  // 发布者头像
+  "content": "今天参加了校园歌手大赛...",     // 动态内容
+  "images": ["src/images/post-1.jpg"],       // 图片数组
+  "publishTime": "2023-11-15T14:30:00.000Z", // 发布时间（ISO格式）
+  "likes": 42,                               // 点赞数
+  "comments": [                              // 评论数组
+    {
+      "id": 1,                               // 评论ID
+      "userId": 101,                         // 评论者用户ID
+      "username": "李四",                    // 评论者用户名
+      "nickname": "李四",                    // 评论者昵称
+      "avatar": "src/images/DefaultAvatar.png", // 评论者头像
+      "content": "太棒了！期待你的表演",      // 评论内容
+      "publishTime": "2023-11-15T15:00:00.000Z", // 评论时间
+      "likes": 3                             // 评论点赞数
+    }
+  ],
+  "shares": 3,                               // 分享数
+  "tags": ["校园活动", "音乐"]               // 话题标签
 }
 ```
 
@@ -82,6 +112,8 @@
 │   ├── css/           # 样式文件（reset、通用、各页面样式）
 │   └── js/            # JS 脚本（通用、各页面逻辑）
 ├── server/            # 后端接口（如有）
+│   ├── user-db.json   # 用户数据示例
+│   └── user-posts.json # 动态数据示例
 ├── docs/              # 项目文档
 ├── need.txt           # 需求说明
 ├── requires.md        # 功能需求与评分标准
@@ -95,6 +127,7 @@
 - **布局**：Flexbox、Grid，响应式设计
 - **样式**：语义化标签，详细中文注释，统一主题色（Pantone 208C）
 - **交互**：原生 JS 实现页面切换、表单校验、动态加载等
+- **数据存储**：localStorage 本地存储，JSON 格式数据结构
 - **资源优化**：图片懒加载、CSS 压缩
 - **兼容性**：适配主流浏览器和移动端
 

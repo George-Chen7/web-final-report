@@ -295,48 +295,131 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载用户动态
     function loadUserPosts() {
-        // 模拟动态数据
-        const posts = [
-            {
-                id: 1,
-                content: '今天参加了校园歌手大赛，感觉很棒！#校园活动 #音乐',
-                images: ['src/images/post-1.jpg', 'src/images/post-2.jpg'],
-                time: '2023-11-15 14:30',
-                likes: 42,
-                comments: 8,
-                shares: 3
-            },
-            {
-                id: 2,
-                content: '图书馆的学习氛围真好，期末复习加油！#学习 #期末',
-                images: ['src/images/post-3.jpg'],
-                time: '2023-11-10 09:15',
-                likes: 18,
-                comments: 5,
-                shares: 0
-            },
-            {
-                id: 3,
-                content: '和朋友一起参加了志愿者活动，帮助社区清理环境，感觉很有意义！#志愿者 #环保',
-                images: [],
-                time: '2023-11-05 16:45',
-                likes: 36,
-                comments: 12,
-                shares: 7
-            }
-        ];
+        // 获取当前用户信息
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        
+        // 从localStorage获取用户的动态数据，如果没有则初始化默认数据
+        let userPosts = JSON.parse(localStorage.getItem(`userPosts_${currentUser.id}`));
+        
+        if (!userPosts) {
+            // 初始化默认动态数据（JSON格式）
+            userPosts = [
+                {
+                    "id": 1,
+                    "userId": currentUser.id,
+                    "username": currentUser.username,
+                    "nickname": currentUser.nickname || currentUser.username,
+                    "avatar": currentUser.avatar || "src/images/DefaultAvatar.png",
+                    "content": "今天参加了校园歌手大赛，感觉很棒！#校园活动 #音乐",
+                    "images": ["src/images/DefaultAvatar.png", "src/images/DefaultAvatar.png"],
+                    "publishTime": "2023-11-15T14:30:00.000Z",
+                    "likes": 42,
+                    "comments": [
+                        {
+                            "id": 1,
+                            "userId": 101,
+                            "username": "李四",
+                            "nickname": "李四",
+                            "avatar": "src/images/DefaultAvatar.png",
+                            "content": "太棒了！期待你的表演",
+                            "publishTime": "2023-11-15T15:00:00.000Z",
+                            "likes": 3
+                        },
+                        {
+                            "id": 2,
+                            "userId": 102,
+                            "username": "王五",
+                            "nickname": "王五",
+                            "avatar": "src/images/DefaultAvatar.png",
+                            "content": "加油！你一定可以的",
+                            "publishTime": "2023-11-15T15:30:00.000Z",
+                            "likes": 1
+                        }
+                    ],
+                    "shares": 3,
+                    "tags": ["校园活动", "音乐"]
+                },
+                {
+                    "id": 2,
+                    "userId": currentUser.id,
+                    "username": currentUser.username,
+                    "nickname": currentUser.nickname || currentUser.username,
+                    "avatar": currentUser.avatar || "src/images/DefaultAvatar.png",
+                    "content": "图书馆的学习氛围真好，期末复习加油！#学习 #期末",
+                    "images": ["src/images/DefaultAvatar.png"],
+                    "publishTime": "2023-11-10T09:15:00.000Z",
+                    "likes": 18,
+                    "comments": [
+                        {
+                            "id": 3,
+                            "userId": 103,
+                            "username": "赵六",
+                            "nickname": "赵六",
+                            "avatar": "src/images/DefaultAvatar.png",
+                            "content": "一起加油！",
+                            "publishTime": "2023-11-10T10:00:00.000Z",
+                            "likes": 2
+                        }
+                    ],
+                    "shares": 0,
+                    "tags": ["学习", "期末"]
+                },
+                {
+                    "id": 3,
+                    "userId": currentUser.id,
+                    "username": currentUser.username,
+                    "nickname": currentUser.nickname || currentUser.username,
+                    "avatar": currentUser.avatar || "src/images/DefaultAvatar.png",
+                    "content": "和朋友一起参加了志愿者活动，帮助社区清理环境，感觉很有意义！#志愿者 #环保",
+                    "images": [],
+                    "publishTime": "2023-11-05T16:45:00.000Z",
+                    "likes": 36,
+                    "comments": [
+                        {
+                            "id": 4,
+                            "userId": 104,
+                            "username": "钱七",
+                            "nickname": "钱七",
+                            "avatar": "src/images/DefaultAvatar.png",
+                            "content": "很有意义的活动，下次叫上我！",
+                            "publishTime": "2023-11-05T17:00:00.000Z",
+                            "likes": 5
+                        },
+                        {
+                            "id": 5,
+                            "userId": 105,
+                            "username": "孙八",
+                            "nickname": "孙八",
+                            "avatar": "src/images/DefaultAvatar.png",
+                            "content": "保护环境，人人有责",
+                            "publishTime": "2023-11-05T17:15:00.000Z",
+                            "likes": 3
+                        }
+                    ],
+                    "shares": 7,
+                    "tags": ["志愿者", "环保"]
+                }
+            ];
+            
+            // 保存到localStorage
+            localStorage.setItem(`userPosts_${currentUser.id}`, JSON.stringify(userPosts));
+        }
         
         // 渲染动态列表
         userPostList.innerHTML = '';
         
-        if (posts.length === 0) {
+        if (userPosts.length === 0) {
             userPostList.innerHTML = '<div class="empty-state">暂无动态</div>';
             return;
         }
         
-        posts.forEach(post => {
+        // 按发布时间倒序排列（最新的在前）
+        userPosts.sort((a, b) => new Date(b.publishTime) - new Date(a.publishTime));
+        
+        userPosts.forEach(post => {
             const postElement = document.createElement('div');
             postElement.className = 'post-item';
+            postElement.setAttribute('data-post-id', post.id);
             
             // 构建图片HTML
             let imagesHTML = '';
@@ -352,71 +435,154 @@ document.addEventListener('DOMContentLoaded', function() {
                 imagesHTML += '</div>';
             }
             
+            // 构建评论HTML
+            let commentsHTML = '';
+            if (post.comments && post.comments.length > 0) {
+                commentsHTML = '<div class="post-comments">';
+                post.comments.forEach(comment => {
+                    commentsHTML += `
+                        <div class="comment-item">
+                            <img src="${comment.avatar}" alt="头像" class="comment-avatar">
+                            <div class="comment-content">
+                                <div class="comment-author">${comment.nickname}</div>
+                                <div class="comment-text">${comment.content}</div>
+                                <div class="comment-time">${formatTime(comment.publishTime)}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                commentsHTML += '</div>';
+            }
+            
+            // 构建标签HTML
+            let tagsHTML = '';
+            if (post.tags && post.tags.length > 0) {
+                tagsHTML = '<div class="post-tags">';
+                post.tags.forEach(tag => {
+                    tagsHTML += `<span class="post-tag">#${tag}</span>`;
+                });
+                tagsHTML += '</div>';
+            }
+            
             // 构建动态HTML
             postElement.innerHTML = `
                 <div class="post-header">
                     <div class="post-avatar">
-                        <img src="${profileAvatar.src}" alt="头像">
+                        <img src="${post.avatar}" alt="头像">
                     </div>
                     <div class="post-author">
-                        <div class="post-author-name">${profileName.textContent}</div>
-                        <div class="post-time">${formatTime(post.time)}</div>
+                        <div class="post-author-name">${post.nickname}</div>
+                        <div class="post-time">${formatTime(post.publishTime)}</div>
                     </div>
                     <div class="post-actions">
-                        <button class="post-menu-btn"><i class="bi bi-three-dots"></i></button>
+                        <button class="post-menu-btn" data-post-id="${post.id}">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="post-content">
                     <div class="post-text">${formatContent(post.content)}</div>
+                    ${tagsHTML}
                     ${imagesHTML}
                 </div>
                 <div class="post-footer">
                     <div class="post-stats">
-                        <div class="post-stat"><i class="bi bi-heart"></i> ${post.likes}</div>
-                        <div class="post-stat"><i class="bi bi-chat"></i> ${post.comments}</div>
-                        <div class="post-stat"><i class="bi bi-share"></i> ${post.shares}</div>
+                        <div class="post-stat" data-type="likes">
+                            <i class="bi bi-heart"></i> 
+                            <span class="like-count">${post.likes}</span>
+                        </div>
+                        <div class="post-stat" data-type="comments">
+                            <i class="bi bi-chat"></i> 
+                            <span class="comment-count">${post.comments.length}</span>
+                        </div>
+                        <div class="post-stat" data-type="shares">
+                            <i class="bi bi-share"></i> 
+                            <span class="share-count">${post.shares}</span>
+                        </div>
                     </div>
                     <div class="post-interactions">
-                        <div class="post-interaction" data-action="like"><i class="bi bi-heart"></i> 点赞</div>
-                        <div class="post-interaction" data-action="comment"><i class="bi bi-chat"></i> 评论</div>
-                        <div class="post-interaction" data-action="share"><i class="bi bi-share"></i> 分享</div>
+                        <div class="post-interaction" data-action="like" data-post-id="${post.id}">
+                            <i class="bi bi-heart"></i> 点赞
+                        </div>
+                        <div class="post-interaction" data-action="comment" data-post-id="${post.id}">
+                            <i class="bi bi-chat"></i> 评论
+                        </div>
+                        <div class="post-interaction" data-action="share" data-post-id="${post.id}">
+                            <i class="bi bi-share"></i> 分享
+                        </div>
                     </div>
                 </div>
+                ${commentsHTML}
             `;
             
             // 添加交互事件
             const likeBtn = postElement.querySelector('.post-interaction[data-action="like"]');
             likeBtn.addEventListener('click', function() {
+                const postId = this.getAttribute('data-post-id');
+                const likeCountElement = postElement.querySelector('.like-count');
+                const currentLikes = parseInt(likeCountElement.textContent);
+                
                 this.classList.toggle('active');
-                const likeCount = postElement.querySelector('.post-stat:first-child');
-                const currentLikes = parseInt(likeCount.textContent.match(/\d+/)[0]);
                 
                 if (this.classList.contains('active')) {
-                    likeCount.innerHTML = `<i class="bi bi-heart-fill"></i> ${currentLikes + 1}`;
+                    likeCountElement.textContent = currentLikes + 1;
                     this.innerHTML = `<i class="bi bi-heart-fill"></i> 已点赞`;
+                    
+                    // 更新localStorage中的数据
+                    const postIndex = userPosts.findIndex(p => p.id == postId);
+                    if (postIndex !== -1) {
+                        userPosts[postIndex].likes += 1;
+                        localStorage.setItem(`userPosts_${currentUser.id}`, JSON.stringify(userPosts));
+                    }
                 } else {
-                    likeCount.innerHTML = `<i class="bi bi-heart"></i> ${currentLikes - 1}`;
+                    likeCountElement.textContent = currentLikes - 1;
                     this.innerHTML = `<i class="bi bi-heart"></i> 点赞`;
+                    
+                    // 更新localStorage中的数据
+                    const postIndex = userPosts.findIndex(p => p.id == postId);
+                    if (postIndex !== -1) {
+                        userPosts[postIndex].likes -= 1;
+                        localStorage.setItem(`userPosts_${currentUser.id}`, JSON.stringify(userPosts));
+                    }
                 }
+            });
+            
+            // 评论按钮事件
+            const commentBtn = postElement.querySelector('.post-interaction[data-action="comment"]');
+            commentBtn.addEventListener('click', function() {
+                const postId = this.getAttribute('data-post-id');
+                // 这里可以添加评论功能
+                alert('评论功能开发中...');
+            });
+            
+            // 分享按钮事件
+            const shareBtn = postElement.querySelector('.post-interaction[data-action="share"]');
+            shareBtn.addEventListener('click', function() {
+                const postId = this.getAttribute('data-post-id');
+                // 这里可以添加分享功能
+                alert('分享功能开发中...');
             });
             
             userPostList.appendChild(postElement);
         });
+        
+        // 更新动态数量统计
+        postCount.textContent = userPosts.length;
     }
     
     // 加载用户相册
     function loadUserPhotos() {
         // 模拟相册数据
         const photos = [
-            'src/images/photo-1.jpg',
-            'src/images/photo-2.jpg',
-            'src/images/photo-3.jpg',
-            'src/images/photo-4.jpg',
-            'src/images/photo-5.jpg',
-            'src/images/photo-6.jpg',
-            'src/images/post-1.jpg',
-            'src/images/post-2.jpg',
-            'src/images/post-3.jpg'
+            'src/images/DefaultAvatar.png',
+            'src/images/DefaultAvatar.png',
+            'src/images/DefaultAvatar.png',
+            'src/images/DefaultAvatar.png',
+            'src/images/DefaultAvatar.png',
+            'src/images/DefaultAvatar.png',
+            'src/images/DefaultAvatar.png',
+            'src/images/DefaultAvatar.png',
+            'src/images/DefaultAvatar.png'
         ];
         
         // 渲染相册
@@ -471,31 +637,31 @@ document.addEventListener('DOMContentLoaded', function() {
             {
                 id: 1,
                 name: '李四',
-                avatar: 'src/images/avatar-1.jpg',
+                avatar: 'src/images/DefaultAvatar.png',
                 college: '计算机学院'
             },
             {
                 id: 2,
                 name: '王五',
-                avatar: 'src/images/avatar-2.jpg',
+                avatar: 'src/images/DefaultAvatar.png',
                 college: '经济管理学院'
             },
             {
                 id: 3,
                 name: '赵六',
-                avatar: 'src/images/avatar-3.jpg',
+                avatar: 'src/images/DefaultAvatar.png',
                 college: '外国语学院'
             },
             {
                 id: 4,
                 name: '钱七',
-                avatar: 'src/images/avatar-4.jpg',
+                avatar: 'src/images/DefaultAvatar.png',
                 college: '艺术学院'
             },
             {
                 id: 5,
                 name: '孙八',
-                avatar: 'src/images/avatar-5.jpg',
+                avatar: 'src/images/DefaultAvatar.png',
                 college: '体育学院'
             }
         ];
