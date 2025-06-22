@@ -387,7 +387,7 @@ function createPostHTML(post) {
             
             commentsHTML += `
                 <div class="comment-item" data-comment-id="${comment.id}">
-                    <img src="${commentUser.avatar}" alt="用户头像">
+                    <img src="${commentUser.avatar}" alt="用户头像" class="user-avatar-clickable" data-user-id="${commentUser.id || commentUser.name}" data-user-name="${commentUser.name}" style="cursor: pointer;">
                     <div class="comment-content">
                         <h4>${commentUser.name}</h4>
                         <p>${comment.content}</p>
@@ -431,7 +431,7 @@ function createPostHTML(post) {
     return `
         <article class="post-item" data-post-id="${post.id}">
             <div class="post-header">
-                <img src="${post.user.avatar}" alt="用户头像">
+                <img src="${post.user.avatar}" alt="用户头像" class="user-avatar-clickable" data-user-id="${post.user.id}" data-user-name="${post.user.name}" style="cursor: pointer;">
                 <div class="post-info">
                     <h3>${post.user.nickname || post.user.name}</h3>
                     <p class="post-meta">
@@ -520,7 +520,7 @@ function createCommentsHTML(post) {
             
             commentsHTML += `
                 <div class="comment-item" data-comment-id="${comment.id}">
-                    <img src="${commentUser.avatar}" alt="用户头像">
+                    <img src="${commentUser.avatar}" alt="用户头像" class="user-avatar-clickable" data-user-id="${commentUser.id || commentUser.name}" data-user-name="${commentUser.name}" style="cursor: pointer;">
                     <div class="comment-content">
                         <h4>${commentUser.name}</h4>
                         <p>${comment.content}</p>
@@ -568,6 +568,26 @@ function initPostInteractions() {
             handleHomePagePublish();
         });
     }
+    
+    // 用户头像点击事件
+    const userAvatars = document.querySelectorAll('.user-avatar-clickable');
+    userAvatars.forEach(avatar => {
+        const newAvatar = avatar.cloneNode(true);
+        avatar.parentNode.replaceChild(newAvatar, avatar);
+        newAvatar.addEventListener('click', function(e) {
+            e.preventDefault();
+            const userId = this.getAttribute('data-user-id');
+            const userName = this.getAttribute('data-user-name');
+            
+            // 跳转到用户主页
+            if (userId) {
+                window.location.href = `profile.html?userId=${userId}`;
+            } else if (userName) {
+                // 如果没有userId，使用userName作为备用
+                window.location.href = `profile.html?userId=${userName}`;
+            }
+        });
+    });
     
     // 删除按钮
     const deleteButtons = document.querySelectorAll('.btn-delete');
