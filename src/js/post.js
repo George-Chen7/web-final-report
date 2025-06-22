@@ -347,6 +347,7 @@ function simulatePostRequest(postData) {
             },
             content: postData.content,
             images: postData.images, // 存储图片路径
+            topics: postData.topics, // 存储话题标签
             time: new Date(),
             likes: 0,
             visibility: postData.visibility,

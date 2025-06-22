@@ -407,6 +407,29 @@ function createPostHTML(post) {
         .replace(/\n/g, '</p><p>')
         .replace(/#(\S+)/g, '<a href="#" class="topic">#$1</a>');
     
+    // 处理话题标签显示
+    let topicsHTML = '';
+    let topics = [];
+    
+    // 优先使用动态对象中的topics字段
+    if (post.topics && post.topics.length > 0) {
+        topics = post.topics;
+    } else {
+        // 如果没有topics字段，从内容中提取话题标签
+        const topicMatches = post.content.match(/#(\S+)/g);
+        if (topicMatches) {
+            topics = topicMatches.map(tag => tag.substring(1)); // 去掉#号
+        }
+    }
+    
+    if (topics.length > 0) {
+        topicsHTML = `
+            <div class="post-topics">
+                ${topics.map(topic => `<span class="topic-tag">#${topic}</span>`).join('')}
+            </div>
+        `;
+    }
+    
     // 可见性标识
     let visibilityIcon = '';
     let visibilityText = '';
@@ -445,6 +468,7 @@ function createPostHTML(post) {
             </div>
             <div class="post-content">
                 <p>${formattedContent}</p>
+                ${topicsHTML}
                 ${imagesHTML}
             </div>
             <div class="post-actions">
@@ -628,7 +652,7 @@ function initPostInteractions() {
         button.parentNode.replaceChild(newBtn, button);
         newBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            const postId = parseInt(this.closest('.post-item').getAttribute('data-post-id'));
+            const postId = this.closest('.post-item').getAttribute('data-post-id');
             toggleLike(postId);
         });
     });
@@ -759,7 +783,7 @@ function bindCommentEvents(postId) {
     commentLikeButtons.forEach(button => {
         button.addEventListener('click', function() {
             const commentItem = this.closest('.comment-item');
-            const commentId = parseInt(commentItem.getAttribute('data-comment-id'));
+            const commentId = commentItem.getAttribute('data-comment-id');
             toggleCommentLike(postId, commentId);
         });
     });
@@ -806,7 +830,7 @@ function sendComment(postId, content) {
     
     // 获取动态数据
     let posts = JSON.parse(localStorage.getItem('postList')) || [];
-    const postIndex = posts.findIndex(post => post.id === postId);
+    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
     
     if (postIndex === -1) {
         alert('动态不存在');
@@ -1161,7 +1185,7 @@ function toggleLike(postId) {
     
     // 获取动态数据
     let posts = JSON.parse(localStorage.getItem('postList')) || [];
-    const postIndex = posts.findIndex(post => post.id === postId);
+    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
     
     if (postIndex === -1) {
         alert('动态不存在');
@@ -1250,7 +1274,7 @@ function toggleCommentLike(postId, commentId) {
     
     // 获取动态数据
     let posts = JSON.parse(localStorage.getItem('postList')) || [];
-    const postIndex = posts.findIndex(post => post.id === postId);
+    const postIndex = posts.findIndex(post => String(post.id) === String(postId));
     
     if (postIndex === -1) {
         alert('动态不存在');
@@ -1258,7 +1282,7 @@ function toggleCommentLike(postId, commentId) {
     }
     
     const post = posts[postIndex];
-    const commentIndex = post.comments.findIndex(comment => comment.id === commentId);
+    const commentIndex = post.comments.findIndex(comment => String(comment.id) === String(commentId));
     
     if (commentIndex === -1) {
         alert('评论不存在');

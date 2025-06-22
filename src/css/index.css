@@ -341,7 +341,33 @@
 }
 
 .post-content p {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+/* 动态话题标签样式 */
+.post-topics {
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.post-topics .topic-tag {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.post-topics .topic-tag:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
 }
 
 .post-images {
