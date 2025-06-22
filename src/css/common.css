@@ -207,6 +207,7 @@ textarea:focus {
     margin-left: 15px;
 }
 
+/* 用户信息区域 */
 .user-info {
     position: relative;
 }
@@ -218,12 +219,15 @@ textarea:focus {
     overflow: hidden;
     cursor: pointer;
     position: relative;
+    flex-shrink: 0; /* 防止头像被压缩 */
 }
 
 .avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    max-width: 36px; /* 限制最大宽度 */
+    max-height: 36px; /* 限制最大高度 */
 }
 
 .notification {
@@ -271,6 +275,42 @@ textarea:focus {
 
 .dropdown-menu i {
     margin-right: 8px;
+}
+
+/* 用户菜单样式 */
+.user-menu {
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0; /* 防止头像被压缩 */
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    max-width: 36px; /* 限制最大宽度 */
+    max-height: 36px; /* 限制最大高度 */
+}
+
+/* 游客操作区域 */
+.guest-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.guest-actions .btn {
+    padding: 6px 12px;
+    font-size: 14px;
 }
 
 /* 底部信息 */

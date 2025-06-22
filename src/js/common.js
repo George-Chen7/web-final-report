@@ -156,17 +156,29 @@ function checkLoginStatus() {
  * @param {Object} user - 用户信息
  */
 function updateUIForLoggedInUser(user) {
-    // 隐藏登录/注册按钮
+    // 隐藏登录/注册按钮 - 支持多种HTML结构
     const authButtons = document.querySelector('.auth-buttons');
+    const guestActions = document.querySelector('.guest-actions');
     if (authButtons) authButtons.style.display = 'none';
+    if (guestActions) guestActions.style.display = 'none';
     
-    // 显示用户信息
+    // 显示用户信息 - 支持多种HTML结构
     const userInfoElement = document.querySelector('.user-info');
+    const userMenu = document.querySelector('.user-menu');
     if (userInfoElement) {
         userInfoElement.style.display = 'block';
         
         // 更新头像
         const avatarImg = userInfoElement.querySelector('.avatar img');
+        if (avatarImg) {
+            avatarImg.src = user.avatar || 'src/images/DefaultAvatar.png';
+        }
+    }
+    if (userMenu) {
+        userMenu.style.display = 'flex';
+        
+        // 更新头像
+        const avatarImg = userMenu.querySelector('.user-avatar img');
         if (avatarImg) {
             avatarImg.src = user.avatar || 'src/images/DefaultAvatar.png';
         }
@@ -205,13 +217,17 @@ function updateUIForLoggedInUser(user) {
  * 更新游客的UI
  */
 function updateUIForGuest() {
-    // 显示登录/注册按钮
+    // 显示登录/注册按钮 - 支持多种HTML结构
     const authButtons = document.querySelector('.auth-buttons');
+    const guestActions = document.querySelector('.guest-actions');
     if (authButtons) authButtons.style.display = 'flex';
+    if (guestActions) guestActions.style.display = 'flex';
     
-    // 隐藏用户信息
+    // 隐藏用户信息 - 支持多种HTML结构
     const userInfoElement = document.querySelector('.user-info');
+    const userMenu = document.querySelector('.user-menu');
     if (userInfoElement) userInfoElement.style.display = 'none';
+    if (userMenu) userMenu.style.display = 'none';
     
     // 隐藏发布动态区域
     const createPost = document.querySelector('.create-post');

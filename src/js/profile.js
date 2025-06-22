@@ -11,6 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
+    // 调用common.js中的登录状态检查函数，确保UI正确显示
+    if (typeof checkLoginStatus === 'function') {
+        checkLoginStatus();
+    }
+    
     // 更新页面标题
     document.title = `${currentUser.nickname || currentUser.name} 的个人资料 - 荔荔社区`;
     
