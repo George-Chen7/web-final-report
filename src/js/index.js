@@ -2,6 +2,12 @@
  * 荔荔社区 - 首页JavaScript功能
  */
 
+// 分页相关变量
+let currentPage = 1;
+let postsPerPage = 5; // 每页显示的帖子数量
+let allFilteredPosts = []; // 存储所有过滤后的帖子
+let currentTabType = 'all'; // 当前标签类型
+
 // DOM加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
     // 首页加载时初始化预设用户
@@ -51,8 +57,10 @@ function initContentTabs() {
 function loadPosts(type = 'all', append = false) {
     const postsContainer = document.querySelector('.posts-list');
     
-    // 如果不是追加，则清空容器
+    // 如果不是追加，则重置分页状态
     if (!append) {
+        currentPage = 1;
+        currentTabType = type;
         postsContainer.innerHTML = '<div class="loading">加载中...</div>';
     }
     
@@ -64,23 +72,35 @@ function loadPosts(type = 'all', append = false) {
             postsContainer.removeChild(loading);
         }
         
-        // 模拟获取动态数据
-        const posts = getPostsData(type);
+        // 获取所有过滤后的动态数据
+        if (!append) {
+            allFilteredPosts = getPostsData(type);
+        }
+        
+        // 计算当前页应该显示的帖子
+        const startIndex = (currentPage - 1) * postsPerPage;
+        const endIndex = startIndex + postsPerPage;
+        const currentPagePosts = allFilteredPosts.slice(startIndex, endIndex);
         
         // 如果没有数据
-        if (posts.length === 0) {
+        if (allFilteredPosts.length === 0) {
             postsContainer.innerHTML = '<div class="no-content">暂无内容</div>';
+            updateLoadMoreButton(false);
             return;
         }
         
         // 渲染动态
-        posts.forEach(post => {
+        currentPagePosts.forEach(post => {
             if (!append) {
                 postsContainer.innerHTML += createPostHTML(post);
             } else {
                 postsContainer.insertAdjacentHTML('beforeend', createPostHTML(post));
             }
         });
+        
+        // 检查是否还有更多内容
+        const hasMorePosts = endIndex < allFilteredPosts.length;
+        updateLoadMoreButton(hasMorePosts);
         
         // 重新绑定交互事件
         initPostInteractions();
@@ -412,13 +432,32 @@ function initPostsLoading() {
     
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', function() {
-            // 获取当前活动的标签类型
-            const activeTab = document.querySelector('.content-tabs .tab.active');
-            const tabType = activeTab ? activeTab.dataset.tab : 'all';
+            // 增加页码
+            currentPage++;
             
             // 加载更多动态
-            loadPosts(tabType, true);
+            loadPosts(currentTabType, true);
         });
+    }
+}
+
+/**
+ * 更新加载更多按钮状态
+ * @param {boolean} hasMore - 是否还有更多内容
+ */
+function updateLoadMoreButton(hasMore) {
+    const loadMoreBtn = document.querySelector('.load-more button');
+    if (!loadMoreBtn) return;
+    
+    if (hasMore) {
+        loadMoreBtn.textContent = '加载更多';
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.style.cursor = 'pointer';
+    } else {
+        loadMoreBtn.textContent = '已经滑到底了';
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.style.cursor = 'not-allowed';
+        loadMoreBtn.style.opacity = '0.6';
     }
 }
 
@@ -1089,8 +1128,8 @@ function handleHomePagePublish() {
     // 清空输入框
     textarea.value = '';
     
-    // 重新加载动态
-    loadPosts('all');
+    // 重新加载动态（重置分页状态）
+    loadPosts(currentTabType);
     
     // 显示成功提示
     showToast('动态发布成功！', 'success');
