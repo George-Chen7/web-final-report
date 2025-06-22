@@ -110,6 +110,7 @@ function getPostsData(type) {
                 images: ['src/images/DefaultAvatar.png'],
                 time: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2小时前
                 likes: 42,
+                visibility: 'public', // 公开
                 comments: [
                     {
                         id: 201,
@@ -138,6 +139,7 @@ function getPostsData(type) {
                 images: ['src/images/DefaultAvatar.png', 'src/images/DefaultAvatar.png'],
                 time: new Date(Date.now() - 24 * 60 * 60 * 1000), // 昨天
                 likes: 78,
+                visibility: 'public', // 公开
                 comments: []
             },
             {
@@ -153,6 +155,7 @@ function getPostsData(type) {
                 images: ['src/images/DefaultAvatar.png'],
                 time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3天前
                 likes: 156,
+                visibility: 'public', // 公开
                 comments: []
             },
             {
@@ -167,6 +170,7 @@ function getPostsData(type) {
                 images: ['src/images/DefaultAvatar.png'],
                 time: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6小时前
                 likes: 89,
+                visibility: 'followers', // 粉丝可见
                 comments: []
             },
             {
@@ -181,6 +185,7 @@ function getPostsData(type) {
                 images: ['src/images/DefaultAvatar.png', 'src/images/DefaultAvatar.png'],
                 time: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12小时前
                 likes: 203,
+                visibility: 'public', // 公开
                 comments: []
             },
             {
@@ -195,11 +200,44 @@ function getPostsData(type) {
                 images: ['src/images/DefaultAvatar.png'],
                 time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1天前
                 likes: 267,
+                visibility: 'private', // 私密
                 comments: []
             }
         ];
         localStorage.setItem('postList', JSON.stringify(allPosts));
     }
+    
+    // 获取当前用户信息
+    const currentUser = JSON.parse(localStorage.getItem('currentUser')) || { role: 'guest' };
+    
+    // 根据可见性过滤帖子
+    let filteredPosts = allPosts.filter(post => {
+        // 如果是游客，只能看到公开的帖子
+        if (currentUser.role === 'guest') {
+            return post.visibility === 'public';
+        }
+        
+        // 如果是帖子作者，可以看到自己的所有帖子
+        if (currentUser.username === post.user.name || currentUser.id === post.user.id) {
+            return true;
+        }
+        
+        // 根据可见性判断
+        switch (post.visibility) {
+            case 'public':
+                return true; // 公开帖子所有人都能看到
+            case 'followers':
+                // 粉丝可见：检查当前用户是否关注了帖子作者
+                if (currentUser.following && currentUser.following.includes(post.user.id)) {
+                    return true;
+                }
+                return false;
+            case 'private':
+                return false; // 私密帖子只有作者能看到
+            default:
+                return true; // 默认公开
+        }
+    });
     
     // 类型筛选
     switch (type) {
@@ -208,11 +246,11 @@ function getPostsData(type) {
             return [];
         case 'hot':
             // 热门推荐 - 按点赞数排序，返回前5条
-            return [...allPosts].sort((a, b) => b.likes - a.likes).slice(0, 5);
+            return [...filteredPosts].sort((a, b) => b.likes - a.likes).slice(0, 5);
         case 'all':
         default:
             // 全站动态 - 按时间排序
-            return [...allPosts].sort((a, b) => new Date(b.time) - new Date(a.time));
+            return [...filteredPosts].sort((a, b) => new Date(b.time) - new Date(a.time));
     }
 }
 
@@ -299,13 +337,39 @@ function createPostHTML(post) {
         .replace(/\n/g, '</p><p>')
         .replace(/#(\S+)/g, '<a href="#" class="topic">#$1</a>');
     
+    // 可见性标识
+    let visibilityIcon = '';
+    let visibilityText = '';
+    switch (post.visibility) {
+        case 'public':
+            visibilityIcon = '<i class="bi bi-globe"></i>';
+            visibilityText = '公开';
+            break;
+        case 'followers':
+            visibilityIcon = '<i class="bi bi-people"></i>';
+            visibilityText = '粉丝可见';
+            break;
+        case 'private':
+            visibilityIcon = '<i class="bi bi-lock"></i>';
+            visibilityText = '私密';
+            break;
+        default:
+            visibilityIcon = '<i class="bi bi-globe"></i>';
+            visibilityText = '公开';
+    }
+    
     return `
         <article class="post-item" data-post-id="${post.id}">
             <div class="post-header">
                 <img src="${post.user.avatar}" alt="用户头像">
                 <div class="post-info">
                     <h3>${post.user.nickname || post.user.name}</h3>
-                    <p class="post-meta">${post.user.department} · ${formatTime(post.time)}</p>
+                    <p class="post-meta">
+                        ${post.user.department} · ${formatTime(post.time)}
+                        <span class="visibility-badge" title="${visibilityText}">
+                            ${visibilityIcon} ${visibilityText}
+                        </span>
+                    </p>
                 </div>
                 ${actionButtonHTML}
             </div>
@@ -399,6 +463,17 @@ function createCommentsHTML(post) {
 function initPostInteractions() {
     // 获取当前用户
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    // 首页发布动态功能
+    const publishBtn = document.querySelector('.btn-publish');
+    if (publishBtn) {
+        const newBtn = publishBtn.cloneNode(true);
+        publishBtn.parentNode.replaceChild(newBtn, publishBtn);
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleHomePagePublish();
+        });
+    }
     
     // 删除按钮
     const deleteButtons = document.querySelectorAll('.btn-delete');
@@ -924,4 +999,64 @@ function formatTime(date) {
     } else {
         return new Date(date).toLocaleDateString();
     }
+}
+
+/**
+ * 处理首页发布动态
+ */
+function handleHomePagePublish() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    // 检查登录状态
+    if (!currentUser || currentUser.role === 'guest') {
+        alert('请先登录后才能发布动态');
+        return;
+    }
+    
+    // 获取发布内容
+    const textarea = document.querySelector('.create-post-module textarea');
+    const content = textarea.value.trim();
+    const visibility = document.getElementById('postVisibility').value;
+    
+    // 验证内容
+    if (!content) {
+        alert('请输入动态内容');
+        return;
+    }
+    
+    if (content.length > 1000) {
+        alert('内容不能超过1000个字符');
+        return;
+    }
+    
+    // 构建动态数据
+    const newPost = {
+        id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+        user: {
+            id: currentUser.id || currentUser.username,
+            name: currentUser.nickname || currentUser.name || currentUser.username,
+            avatar: currentUser.avatar || 'src/images/DefaultAvatar.png',
+            department: currentUser.department || '未知学院'
+        },
+        content: content,
+        images: [],
+        time: new Date(),
+        likes: 0,
+        visibility: visibility,
+        comments: []
+    };
+    
+    // 获取现有动态并添加新动态
+    let posts = JSON.parse(localStorage.getItem('postList') || '[]');
+    posts.unshift(newPost);
+    localStorage.setItem('postList', JSON.stringify(posts));
+    
+    // 清空输入框
+    textarea.value = '';
+    
+    // 重新加载动态
+    loadPosts('all');
+    
+    // 显示成功提示
+    showToast('动态发布成功！', 'success');
 }

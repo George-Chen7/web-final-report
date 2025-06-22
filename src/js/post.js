@@ -229,7 +229,7 @@ function handleSubmit(e) {
     const content = document.getElementById('postContent').value.trim();
     const images = Array.from(document.querySelectorAll('.preview-item img')).map(img => img.src);
     const topics = Array.from(document.querySelectorAll('.topic-tag.selected')).map(tag => tag.getAttribute('data-tag'));
-    const privacy = document.querySelector('input[name="privacy"]:checked').value;
+    const visibility = document.querySelector('input[name="privacy"]:checked').value;
     
     // 验证内容
     const contentError = document.getElementById('contentError');
@@ -254,7 +254,7 @@ function handleSubmit(e) {
         content: content,
         images: images,
         topics: topics,
-        privacy: privacy,
+        visibility: visibility,
         createdAt: new Date().toISOString(),
         likes: 0,
         comments: 0,
@@ -298,6 +298,7 @@ function simulatePostRequest(postData) {
             images: postData.images,
             time: new Date(),
             likes: 0,
+            visibility: postData.visibility,
             comments: []
         };
         
