@@ -119,6 +119,7 @@
     grid-row: 2 / 4;
 }
 
+.checkin-card,
 .guest-card,
 .hot-topics,
 .recommended-users {
@@ -127,6 +128,69 @@
     box-shadow: var(--shadow);
     padding: 20px;
     margin-bottom: 20px;
+}
+
+/* 打卡签到模块样式 */
+.checkin-card h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkin-card h3 i {
+    color: var(--primary-color);
+}
+
+.checkin-info {
+    margin-bottom: 15px;
+}
+
+.checkin-status {
+    font-size: 14px;
+    color: var(--text-light);
+    margin-bottom: 8px;
+}
+
+.checkin-status.signed {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.checkin-streak {
+    font-size: 14px;
+    color: var(--text-light);
+}
+
+.checkin-streak span {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.checkin-actions {
+    text-align: center;
+}
+
+.checkin-actions .btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.checkin-actions .btn:disabled {
+    background-color: var(--text-lighter);
+    cursor: not-allowed;
+}
+
+.checkin-actions .btn:disabled:hover {
+    background-color: var(--text-lighter);
 }
 
 .guest-card h3,

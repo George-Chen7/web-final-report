@@ -228,6 +228,16 @@ function updateUIForLoggedInUser(user) {
         guestCard.style.display = 'none';
     }
     
+    // 显示打卡签到模块
+    const checkinCard = document.querySelector('.checkin-card');
+    if (checkinCard) {
+        checkinCard.style.display = 'block';
+        // 如果存在initCheckinModule函数，调用它
+        if (typeof initCheckinModule === 'function') {
+            initCheckinModule();
+        }
+    }
+    
     // 启用评论输入
     const commentInputs = document.querySelectorAll('.comment-input input');
     const commentSendButtons = document.querySelectorAll('.btn-send-comment');
@@ -283,6 +293,12 @@ function updateUIForGuest() {
     const guestCard = document.querySelector('.guest-card');
     if (guestCard) {
         guestCard.style.display = 'block';
+    }
+    
+    // 隐藏打卡签到模块
+    const checkinCard = document.querySelector('.checkin-card');
+    if (checkinCard) {
+        checkinCard.style.display = 'none';
     }
     
     // 禁用评论输入

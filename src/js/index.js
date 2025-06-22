@@ -41,6 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 自动加载全站动态内容
     loadPosts('all');
+    
+    // 初始化打卡签到功能
+    initCheckinModule();
 });
 
 /**
@@ -1267,4 +1270,138 @@ function toggleCommentLike(postId, commentId) {
     
     // 重新渲染动态以更新评论点赞状态
     renderPosts();
+}
+
+/**
+ * 初始化打卡签到模块
+ */
+function initCheckinModule() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const checkinCard = document.querySelector('.checkin-card');
+    const guestCard = document.querySelector('.guest-card');
+    
+    if (currentUser && currentUser.role !== 'guest') {
+        // 登录用户显示打卡模块，隐藏游客提示
+        if (checkinCard) checkinCard.style.display = 'block';
+        if (guestCard) guestCard.style.display = 'none';
+        
+        // 初始化打卡状态
+        updateCheckinStatus();
+        
+        // 绑定打卡按钮事件
+        const checkinBtn = document.getElementById('checkinBtn');
+        if (checkinBtn) {
+            checkinBtn.addEventListener('click', handleCheckin);
+        }
+    } else {
+        // 游客隐藏打卡模块，显示游客提示
+        if (checkinCard) checkinCard.style.display = 'none';
+        if (guestCard) guestCard.style.display = 'block';
+    }
+}
+
+/**
+ * 更新打卡状态显示
+ */
+function updateCheckinStatus() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser || currentUser.role === 'guest') return;
+    
+    const checkinStatus = document.querySelector('.checkin-status');
+    const checkinStreak = document.getElementById('checkinStreak');
+    const checkinBtn = document.getElementById('checkinBtn');
+    
+    if (!checkinStatus || !checkinStreak || !checkinBtn) return;
+    
+    // 获取用户的打卡记录
+    const checkinData = JSON.parse(localStorage.getItem('checkinData')) || {};
+    const userCheckin = checkinData[currentUser.username] || {
+        lastCheckin: null,
+        streak: 0,
+        totalCheckins: 0
+    };
+    
+    // 检查今天是否已经打卡
+    const today = new Date().toDateString();
+    const isTodayChecked = userCheckin.lastCheckin === today;
+    
+    // 更新状态显示
+    if (isTodayChecked) {
+        checkinStatus.textContent = '今日已签到';
+        checkinStatus.className = 'checkin-status signed';
+        checkinBtn.disabled = true;
+        checkinBtn.innerHTML = '<i class="bi bi-check-circle"></i> 已签到';
+    } else {
+        checkinStatus.textContent = '今日未签到';
+        checkinStatus.className = 'checkin-status';
+        checkinBtn.disabled = false;
+        checkinBtn.innerHTML = '<i class="bi bi-check-circle"></i> 立即签到';
+    }
+    
+    // 更新连续签到天数
+    checkinStreak.textContent = userCheckin.streak || 0;
+}
+
+/**
+ * 处理打卡签到
+ */
+function handleCheckin() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser || currentUser.role === 'guest') {
+        alert('请先登录');
+        return;
+    }
+    
+    // 检查用户是否被封禁
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const user = userList.find(u => u.username === currentUser.username);
+    if (user && user.banned) {
+        alert('当前账号被封禁，无法操作');
+        return;
+    }
+    
+    const today = new Date().toDateString();
+    const checkinData = JSON.parse(localStorage.getItem('checkinData')) || {};
+    const userCheckin = checkinData[currentUser.username] || {
+        lastCheckin: null,
+        streak: 0,
+        totalCheckins: 0
+    };
+    
+    // 检查是否已经打卡
+    if (userCheckin.lastCheckin === today) {
+        alert('今日已经签到过了');
+        return;
+    }
+    
+    // 计算连续签到天数
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
+    
+    if (userCheckin.lastCheckin === yesterdayStr) {
+        // 连续签到
+        userCheckin.streak = (userCheckin.streak || 0) + 1;
+    } else {
+        // 中断连续签到，重新开始
+        userCheckin.streak = 1;
+    }
+    
+    // 更新打卡记录
+    userCheckin.lastCheckin = today;
+    userCheckin.totalCheckins = (userCheckin.totalCheckins || 0) + 1;
+    
+    // 保存到localStorage
+    checkinData[currentUser.username] = userCheckin;
+    localStorage.setItem('checkinData', JSON.stringify(checkinData));
+    
+    // 更新显示
+    updateCheckinStatus();
+    
+    // 显示成功提示
+    if (typeof showToast === 'function') {
+        showToast('签到成功！', 'success');
+    } else {
+        alert('签到成功！');
+    }
 }

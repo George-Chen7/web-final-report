@@ -62,7 +62,21 @@
 
             <!-- 侧边栏 -->
             <aside class="sidebar">
-                <!-- 游客提示 -->
+                <!-- 打卡签到模块 - 仅登录用户可见 -->
+                <div class="checkin-card" style="display: none;">
+                    <h3><i class="bi bi-calendar-check"></i> 每日签到</h3>
+                    <div class="checkin-info">
+                        <p class="checkin-status">今日未签到</p>
+                        <p class="checkin-streak">连续签到：<span id="checkinStreak">0</span>天</p>
+                    </div>
+                    <div class="checkin-actions">
+                        <button class="btn btn-primary" id="checkinBtn">
+                            <i class="bi bi-check-circle"></i> 立即签到
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 游客提示 - 仅游客可见 -->
                 <div class="guest-card">
                     <h3>欢迎来到荔荔社区</h3>
                     <p>登录后可以发布动态、关注好友、参与互动</p>
