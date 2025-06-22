@@ -129,13 +129,11 @@ function checkLoginStatus() {
     if (userInfo) {
         user = JSON.parse(userInfo);
         
-        // 检查用户是否被封禁
+        // 检查用户是否被封禁 - 修改：不再阻止进入系统，只记录封禁状态
         if (user.banned) {
-            alert('您的账号已被封禁，无法使用系统功能。');
-            localStorage.removeItem('currentUser');
-            user = { role: 'guest' };
-            updateUIForGuest();
-            return;
+            // 不再清除登录状态，让被封禁用户能够进入系统
+            // 封禁限制将在具体的交互功能中实现
+            console.log('用户已被封禁，但允许进入系统');
         }
         
         // 判断管理员和预设用户
@@ -469,6 +467,38 @@ function initPresetUsers() {
             interestTags: ['音乐', '唱歌', '表演'],
             avatar: 'src/images/DefaultAvatar.png',
             id: 1750516625145,
+            role: 'user',
+            following: [],
+            followers: [],
+            banned: false
+        });
+    }
+    // 美食达人
+    if (!users.find(u => u.username === 'food_lover')) {
+        users.push({
+            username: 'food_lover',
+            studentId: '2021004001',
+            nickname: '美食达人',
+            password: '111111c',
+            interestTags: ['美食', '烹饪', '探店'],
+            avatar: 'src/images/DefaultAvatar.png',
+            id: 104,
+            role: 'user',
+            following: [],
+            followers: [],
+            banned: false
+        });
+    }
+    // 运动健将
+    if (!users.find(u => u.username === 'sports_enthusiast')) {
+        users.push({
+            username: 'sports_enthusiast',
+            studentId: '2021005001',
+            nickname: '运动健将',
+            password: '111111c',
+            interestTags: ['运动', '篮球', '健身'],
+            avatar: 'src/images/DefaultAvatar.png',
+            id: 105,
             role: 'user',
             following: [],
             followers: [],

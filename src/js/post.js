@@ -275,6 +275,21 @@ function handleSubmit(e) {
         return;
     }
     
+    // 检查用户登录状态
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) {
+        alert('请先登录');
+        return;
+    }
+    
+    // 检查用户是否被封禁
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const user = userList.find(u => u.username === currentUser.username);
+    if (user && user.banned) {
+        alert('当前账号被封禁，无法操作');
+        return;
+    }
+    
     // 构建动态数据
     const postData = {
         id: generateUniqueId(),
@@ -325,7 +340,8 @@ function simulatePostRequest(postData) {
             id: postData.id,
             user: {
                 id: currentUser.id || currentUser.username,
-                name: currentUser.nickname || currentUser.name || currentUser.username,
+                name: currentUser.username,
+                nickname: currentUser.nickname || currentUser.name || currentUser.username,
                 avatar: currentUser.avatar || 'src/images/DefaultAvatar.png',
                 department: currentUser.department || '未知学院'
             },

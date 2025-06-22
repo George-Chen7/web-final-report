@@ -46,5 +46,29 @@
     "role": "user",
     "following": [],
     "followers": []
+  },
+  {
+    "username": "food_lover",
+    "studentId": "2021004001",
+    "nickname": "美食达人",
+    "password": "111111c",
+    "interestTags": ["美食", "烹饪", "探店"],
+    "avatar": "src/images/DefaultAvatar.png",
+    "id": 104,
+    "role": "user",
+    "following": [],
+    "followers": []
+  },
+  {
+    "username": "sports_enthusiast",
+    "studentId": "2021005001",
+    "nickname": "运动健将",
+    "password": "111111c",
+    "interestTags": ["运动", "篮球", "健身"],
+    "avatar": "src/images/DefaultAvatar.png",
+    "id": 105,
+    "role": "user",
+    "following": [],
+    "followers": []
   }
 ] 

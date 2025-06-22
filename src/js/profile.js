@@ -5,56 +5,62 @@
 // 全局取消关注函数
 function unfollowUser(userId) {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const userList = JSON.parse(localStorage.getItem('userList') || '[]');
     
     if (!currentUser) {
         alert('请先登录');
         return;
     }
     
-    // 找到目标用户
-    const targetUser = userList.find(u => String(u.id) === String(userId));
-    if (!targetUser) {
+    // 检查用户是否被封禁
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const user = userList.find(u => u.username === currentUser.username);
+    if (user && user.banned) {
+        alert('当前账号被封禁，无法操作');
+        return;
+    }
+    
+    // 获取用户列表
+    let users = JSON.parse(localStorage.getItem('userList')) || [];
+    
+    // 找到当前用户和目标用户
+    const currentUserIndex = users.findIndex(u => u.username === currentUser.username);
+    const targetUser = users.find(u => String(u.id) === String(userId));
+    
+    if (currentUserIndex === -1 || !targetUser) {
         alert('用户不存在');
         return;
     }
     
-    // 确认取消关注
-    if (!confirm(`确定要取消关注 ${targetUser.nickname || targetUser.username} 吗？`)) {
-        return;
+    const currentUserData = users[currentUserIndex];
+    
+    // 从关注列表中移除
+    if (currentUserData.following) {
+        currentUserData.following = currentUserData.following.filter(id => String(id) !== String(userId));
     }
     
-    // 从当前用户的following数组中移除
-    const currentUserIndex = userList.findIndex(u => String(u.id) === String(currentUser.id));
-    if (currentUserIndex !== -1) {
-        const currentUserData = userList[currentUserIndex];
-        if (currentUserData.following) {
-            // 移除用户ID和用户名
-            currentUserData.following = currentUserData.following.filter(id => 
-                String(id) !== String(userId) && String(id) !== targetUser.username
-            );
-            
-            // 更新用户列表
-            localStorage.setItem('userList', JSON.stringify(userList));
-            
-            // 更新当前用户信息
-            localStorage.setItem('currentUser', JSON.stringify(currentUserData));
-            
-            // 重新加载关注列表和统计数据
-            if (typeof loadFollowingList === 'function') {
-                loadFollowingList();
-            }
-            if (typeof loadFollowLists === 'function') {
-                loadFollowLists();
-            }
-            
-            alert('已取消关注');
-        }
+    // 从目标用户的粉丝列表中移除
+    if (targetUser.followers) {
+        targetUser.followers = targetUser.followers.filter(username => username !== currentUser.username);
     }
+    
+    // 保存更新
+    localStorage.setItem('userList', JSON.stringify(users));
+    
+    // 更新当前用户信息
+    localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+    
+    // 重新加载关注列表
+    loadFollowingList();
+    
+    // 更新关注数
+    updateFollowCounts();
+    
+    showMessage('已取消关注', 'success');
 }
 
 // 全局访问用户主页函数
 function visitUserProfile(userId) {
+    console.log('visitUserProfile 被调用，用户ID:', userId);
     // 跳转到用户主页，传递用户ID参数
     window.location.href = `profile.html?userId=${userId}`;
 }
@@ -70,10 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 检查用户是否被封禁
     if (currentUser.banned) {
-        alert('您的账号已被封禁，无法使用系统功能。');
-        localStorage.removeItem('currentUser');
-        window.location.href = 'index.html';
-        return;
+        // 修改：不再阻止进入系统，只记录封禁状态
+        // 封禁限制将在具体的交互功能中实现
+        console.log('用户已被封禁，但允许进入个人主页');
     }
     
     // 获取clickUser（从URL参数或localStorage）
@@ -255,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.onload = function(e) {
                 profileAvatar.src = e.target.result;
                 if (userAvatar) {
-                    userAvatar.src = e.target.result;
+                userAvatar.src = e.target.result;
                 }
                 
                 // 更新用户头像
@@ -449,13 +454,38 @@ document.addEventListener('DOMContentLoaded', function() {
     // 加载用户动态
     function loadUserPosts() {
         // 获取所有动态
-        const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
+        let allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
         
         // 获取当前用户信息
         const currentUser = JSON.parse(localStorage.getItem('currentUser')) || { role: 'guest' };
         
+        // 获取用户列表，用于检查封禁状态
+        const userList = JSON.parse(localStorage.getItem('userList')) || [];
+        
+        // 过滤掉被封禁用户发布的帖子
+        allPosts = allPosts.filter(post => {
+            if (!post.user || !post.user.name) return true; // 保留没有用户信息的帖子
+            
+            // 查找用户是否被封禁
+            const user = userList.find(u => u.username === post.user.name);
+            return !user || !user.banned; // 如果用户不存在或未被封禁，则显示帖子
+        });
+        
         // 只筛选clickUser发布的动态
-        let userPosts = allPosts.filter(post => post.user && (post.user.id === clickUser.id || post.user.name === clickUser.username));
+        let userPosts = allPosts.filter(post => {
+            if (!post.user) return false;
+            
+            // 通过用户ID匹配
+            if (post.user.id === clickUser.id) return true;
+            
+            // 通过用户名匹配（新数据结构）
+            if (post.user.name === clickUser.username) return true;
+            
+            // 通过昵称匹配（旧数据结构）
+            if (post.user.name === clickUser.nickname) return true;
+            
+            return false;
+        });
         
         // 根据可见性过滤动态
         userPosts = userPosts.filter(post => {
@@ -476,7 +506,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'followers':
                     // 粉丝可见：检查当前用户是否是clickUser的粉丝
                     // 通过检查其他用户的following数组中是否包含clickUser的ID，且该用户是currentUser
-                    const userList = JSON.parse(localStorage.getItem('userList') || '[]');
                     const clickUserId = String(clickUser.id);
                     const isFollower = userList.some(user => {
                         // 检查是否是currentUser
@@ -502,13 +531,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // 按时间倒序
             userPosts.sort((a, b) => new Date(b.time) - new Date(a.time));
             userPosts.forEach(post => {
-                const postElement = document.createElement('div');
-                postElement.className = 'post-item';
+            const postElement = document.createElement('div');
+            postElement.className = 'post-item';
                 postElement.setAttribute('data-post-id', post.id);
-                
+            
                 // 处理图片展示
-                let imagesHTML = '';
-                if (post.images && post.images.length > 0) {
+            let imagesHTML = '';
+            if (post.images && post.images.length > 0) {
                     // 获取图片存储数据
                     const imageStorage = JSON.parse(localStorage.getItem('imageStorage') || '{}');
                     
@@ -526,8 +555,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         imagesHTML = `
                             <div class="post-images">
                                 <img src="${processedImages[0]}" alt="动态图片">
-                            </div>
-                        `;
+                        </div>
+                    `;
                     } else if (processedImages.length === 2) {
                         imagesHTML = `
                             <div class="post-images grid-2">
@@ -578,38 +607,43 @@ document.addEventListener('DOMContentLoaded', function() {
                         <i class="bi bi-trash"></i>
                     </button>` : '';
                 
-                postElement.innerHTML = `
-                    <div class="post-header">
-                        <div class="post-avatar">
+                // 检查当前用户是否已点赞此动态
+                const isLiked = post.likedBy && post.likedBy.includes(currentUser?.username);
+                const likeIconClass = isLiked ? 'bi-heart-fill' : 'bi-heart';
+                const likeButtonClass = isLiked ? 'post-like-btn active' : 'post-like-btn';
+                
+            postElement.innerHTML = `
+                <div class="post-header">
+                    <div class="post-avatar">
                             <img src="${post.user.avatar || 'src/images/DefaultAvatar.png'}" alt="头像">
-                        </div>
-                        <div class="post-author">
+                    </div>
+                    <div class="post-author">
                             <div class="post-author-name">${post.user.nickname || post.user.name}</div>
                             <div class="post-time">
                                 ${formatTime(post.time)}
                                 <span class="visibility-badge" title="${visibilityText}">
                                     ${visibilityIcon} ${visibilityText}
                                 </span>
-                            </div>
-                        </div>
+                    </div>
+                    </div>
                         ${deleteButton}
-                    </div>
-                    <div class="post-content">
+                </div>
+                <div class="post-content">
                         <div class="post-text">${formattedContent}</div>
-                        ${imagesHTML}
-                    </div>
-                    <div class="post-footer">
-                        <div class="post-stats">
-                            <span class="post-stat"><i class="bi bi-heart"></i> ${post.likes || 0}</span>
+                    ${imagesHTML}
+                </div>
+                <div class="post-footer">
+                    <div class="post-stats">
+                            <span class="${likeButtonClass}" data-post-id="${post.id}" style="cursor: pointer;"><i class="bi ${likeIconClass}"></i> ${post.likes || 0}</span>
                             <span class="post-stat post-comment-btn" style="cursor: pointer;"><i class="bi bi-chat"></i> ${post.comments ? post.comments.length : 0}</span>
-                        </div>
+                    </div>
                     </div>
                     <div class="post-comments"><!-- 默认收起，点击评论按钮后展开 --></div>
                 `;
-                userPostList.appendChild(postElement);
-            });
-        }
-        
+            userPostList.appendChild(postElement);
+        });
+    }
+    
         // 同步动态数量
         postCount.textContent = userPosts.length;
         
@@ -820,10 +854,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 添加点击事件，让整个卡片可以点击进入用户主页
             followingItem.addEventListener('click', function(e) {
+                console.log('关注列表项被点击:', user);
+                console.log('点击的元素:', e.target);
+                console.log('点击的元素类名:', e.target.className);
+                
                 // 如果点击的是取消关注按钮，不执行跳转
                 if (e.target.classList.contains('unfollow-btn')) {
+                    console.log('点击的是取消关注按钮，不跳转');
                     return;
                 }
+                
+                console.log('准备跳转到用户主页:', user.id);
                 // 跳转到用户主页
                 visitUserProfile(user.id);
             });
@@ -846,6 +887,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (confirm('确定要删除这条动态吗？删除后无法恢复。')) {
                     deleteProfilePost(postId);
                 }
+            });
+        });
+        
+        // 点赞按钮点击事件
+        const likeButtons = document.querySelectorAll('.post-like-btn');
+        likeButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = parseInt(this.getAttribute('data-post-id'));
+                toggleProfileLike(postId);
             });
         });
         
@@ -990,14 +1041,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // 发送个人主页评论
     function sendProfileComment(postId, content) {
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser || currentUser.role === 'guest') {
-            alert('请先登录后才能评论');
+        
+        if (!content.trim()) {
+            alert('请输入评论内容');
             return;
         }
         
-        // 获取所有动态
-        const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
-        const postIndex = allPosts.findIndex(p => String(p.id) === String(postId));
+        if (!currentUser || currentUser.role === 'guest') {
+            alert('请先登录后才能发送评论');
+            return;
+        }
+        
+        // 检查用户是否被封禁
+        const userList = JSON.parse(localStorage.getItem('userList')) || [];
+        const user = userList.find(u => u.username === currentUser.username);
+        if (user && user.banned) {
+            alert('当前账号被封禁，无法操作');
+            return;
+        }
+        
+        // 获取动态数据
+        let posts = JSON.parse(localStorage.getItem('postList')) || [];
+        const postIndex = posts.findIndex(post => post.id === postId);
         
         if (postIndex === -1) {
             alert('动态不存在');
@@ -1007,39 +1072,37 @@ document.addEventListener('DOMContentLoaded', function() {
         // 创建新评论
         const newComment = {
             id: Date.now(),
-            userId: currentUser.id,
-            username: currentUser.username,
-            nickname: currentUser.nickname || currentUser.username,
-            avatar: currentUser.avatar || 'src/images/DefaultAvatar.png',
-            content: content,
-            publishTime: new Date().toISOString(),
+            user: {
+                id: currentUser.id,
+                name: currentUser.username,
+                nickname: currentUser.nickname || currentUser.username,
+                avatar: currentUser.avatar || 'src/images/DefaultAvatar.png'
+            },
+            content: content.trim(),
+            time: new Date(),
             likes: 0
         };
         
-        // 添加到动态的评论数组
-        if (!allPosts[postIndex].comments) {
-            allPosts[postIndex].comments = [];
+        // 添加评论到动态
+        if (!posts[postIndex].comments) {
+            posts[postIndex].comments = [];
         }
-        allPosts[postIndex].comments.push(newComment);
+        posts[postIndex].comments.push(newComment);
         
         // 保存到localStorage
-        localStorage.setItem('postList', JSON.stringify(allPosts));
+        localStorage.setItem('postList', JSON.stringify(posts));
         
-        // 更新评论数量显示
-        const postItem = document.querySelector(`[data-post-id="${postId}"]`);
-        const commentBtn = postItem.querySelector('.post-comment-btn');
-        const currentCount = allPosts[postIndex].comments.length;
-        commentBtn.innerHTML = `<i class="bi bi-chat"></i> ${currentCount}`;
+        // 清空输入框
+        const commentInput = document.querySelector(`[data-post-id="${postId}"] .comment-input input`);
+        if (commentInput) {
+            commentInput.value = '';
+            commentInput.dispatchEvent(new Event('input')); // 触发input事件以更新发送按钮状态
+        }
         
-        // 重新渲染评论区域
-        const commentsSection = postItem.querySelector('.post-comments');
-        commentsSection.innerHTML = createProfileCommentsHTML(allPosts[postIndex]);
+        // 重新渲染动态
+        loadUserPosts();
         
-        // 重新绑定事件
-        bindProfileCommentEvents(postId);
-        
-        // 显示成功消息
-        showMessage('评论发送成功', 'success');
+        showMessage('评论发表成功！', 'success');
     }
     
     // 删除个人主页动态
@@ -1082,3 +1145,177 @@ document.addEventListener('DOMContentLoaded', function() {
         showMessage('动态删除成功', 'success');
     }
 });
+
+/**
+ * 关注/取消关注用户
+ * @param {string} targetUsername - 目标用户名
+ */
+function toggleFollow(targetUsername) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    if (!currentUser) {
+        alert('请先登录');
+        return;
+    }
+    
+    // 检查用户是否被封禁
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const user = userList.find(u => u.username === currentUser.username);
+    if (user && user.banned) {
+        alert('当前账号被封禁，无法操作');
+        return;
+    }
+    
+    if (currentUser.username === targetUsername) {
+        alert('不能关注自己');
+        return;
+    }
+    
+    // 获取用户列表
+    let users = JSON.parse(localStorage.getItem('userList')) || [];
+    
+    // 找到当前用户和目标用户
+    const currentUserIndex = users.findIndex(u => u.username === currentUser.username);
+    const targetUserIndex = users.findIndex(u => u.username === targetUsername);
+    
+    if (currentUserIndex === -1 || targetUserIndex === -1) {
+        alert('用户不存在');
+        return;
+    }
+    
+    const currentUserData = users[currentUserIndex];
+    const targetUserData = users[targetUserIndex];
+    
+    // 检查是否已经关注
+    const isFollowing = currentUserData.following && currentUserData.following.includes(targetUsername);
+    
+    if (isFollowing) {
+        // 取消关注
+        currentUserData.following = currentUserData.following.filter(name => name !== targetUsername);
+        targetUserData.followers = targetUserData.followers.filter(name => name !== currentUser.username);
+    } else {
+        // 添加关注
+        if (!currentUserData.following) currentUserData.following = [];
+        if (!targetUserData.followers) targetUserData.followers = [];
+        
+        currentUserData.following.push(targetUsername);
+        targetUserData.followers.push(currentUser.username);
+    }
+    
+    // 保存更新
+    localStorage.setItem('userList', JSON.stringify(users));
+    
+    // 更新当前用户信息
+    localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+    
+    // 更新页面显示
+    updateFollowButton(targetUsername, !isFollowing);
+    updateFollowCounts();
+}
+
+/**
+ * 更新关注和粉丝数量显示
+ */
+function updateFollowCounts() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) return;
+    
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const user = userList.find(u => u.username === currentUser.username);
+    
+    if (user) {
+        // 更新关注数
+        const followingCount = document.querySelector('.following-count');
+        if (followingCount) {
+            followingCount.textContent = (user.following || []).length;
+        }
+        
+        // 更新粉丝数
+        const followerCount = document.querySelector('.follower-count');
+        if (followerCount) {
+            const followers = userList.filter(u => 
+                u.following && u.following.includes(user.username)
+            );
+            followerCount.textContent = followers.length;
+        }
+    }
+}
+
+/**
+ * 个人主页动态点赞功能
+ * @param {number} postId - 动态ID
+ */
+function toggleProfileLike(postId) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (!currentUser) {
+        alert('请先登录');
+        return;
+    }
+    
+    // 检查用户是否被封禁
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const user = userList.find(u => u.username === currentUser.username);
+    if (user && user.banned) {
+        alert('当前账号被封禁，无法操作');
+        return;
+    }
+    
+    // 获取动态数据
+    let posts = JSON.parse(localStorage.getItem('postList')) || [];
+    const postIndex = posts.findIndex(post => post.id === postId);
+    
+    if (postIndex === -1) {
+        alert('动态不存在');
+        return;
+    }
+    
+    const post = posts[postIndex];
+    
+    // 初始化点赞用户列表
+    if (!post.likedBy) {
+        post.likedBy = [];
+    }
+    
+    // 检查用户是否已经点赞
+    const userLikedIndex = post.likedBy.indexOf(currentUser.username);
+    
+    if (userLikedIndex === -1) {
+        // 用户未点赞，添加点赞
+        post.likedBy.push(currentUser.username);
+        post.likes = (post.likes || 0) + 1;
+    } else {
+        // 用户已点赞，取消点赞
+        post.likedBy.splice(userLikedIndex, 1);
+        post.likes = Math.max(0, (post.likes || 0) - 1);
+    }
+    
+    // 保存到localStorage
+    localStorage.setItem('postList', JSON.stringify(posts));
+    
+    // 更新页面显示
+    updateProfileLikeButton(postId, post.likes, post.likedBy.includes(currentUser.username));
+}
+
+/**
+ * 更新个人主页点赞按钮状态
+ * @param {number} postId - 动态ID
+ * @param {number} likeCount - 点赞数
+ * @param {boolean} isLiked - 是否已点赞
+ */
+function updateProfileLikeButton(postId, likeCount, isLiked) {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (!postElement) return;
+    
+    const likeButton = postElement.querySelector('.post-like-btn');
+    const likeIcon = likeButton.querySelector('i');
+    
+    // 更新点赞数
+    likeButton.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i> ${likeCount || 0}`;
+    
+    // 更新点赞状态
+    if (isLiked) {
+        likeButton.classList.add('active');
+    } else {
+        likeButton.classList.remove('active');
+    }
+}
