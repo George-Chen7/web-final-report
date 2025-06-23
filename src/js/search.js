@@ -190,11 +190,11 @@ function renderContentResults(posts, keyword) {
         
         return `
             <div class="content-item">
-                <div class="content-avatar">
+                <div class="content-avatar" onclick="visitUserProfile('${post.user.name}')" style="cursor: pointer;" title="点击查看用户主页">
                     <img src="${userAvatar}" alt="用户头像">
                 </div>
                 <div class="content-info">
-                    <div class="content-author">${post.user.nickname || post.user.name}</div>
+                    <div class="content-author" onclick="visitUserProfile('${post.user.name}')" style="cursor: pointer; color: var(--primary-color);" title="点击查看用户主页">${post.user.nickname || post.user.name}</div>
                     <div class="content-time">${formatTime(post.time)}</div>
                     <div class="content-text">${highlightedContent}</div>
                     <div class="content-stats">
@@ -206,6 +206,36 @@ function renderContentResults(posts, keyword) {
             </div>
         `;
     }).join('');
+    
+    // 为内容搜索结果添加悬停效果
+    const contentItems = contentResults.querySelectorAll('.content-item');
+    contentItems.forEach(item => {
+        const avatar = item.querySelector('.content-avatar');
+        const author = item.querySelector('.content-author');
+        
+        // 头像悬停效果
+        if (avatar) {
+            avatar.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+                this.style.transition = 'transform 0.2s ease';
+            });
+            
+            avatar.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        }
+        
+        // 作者名悬停效果
+        if (author) {
+            author.addEventListener('mouseenter', function() {
+                this.style.textDecoration = 'underline';
+            });
+            
+            author.addEventListener('mouseleave', function() {
+                this.style.textDecoration = 'none';
+            });
+        }
+    });
 }
 
 /**
@@ -283,7 +313,7 @@ function renderTagsResults(tags, keyword) {
         const recentPosts = tag.posts.slice(0, 3); // 显示最近3个帖子
         
         return `
-            <div class="tag-item">
+            <div class="tag-item" onclick="searchTag('${tag.name}')" style="cursor: pointer;" title="点击搜索此话题">
                 <div class="tag-header">
                     <div class="tag-icon">
                         <i class="bi bi-tag"></i>
@@ -305,6 +335,20 @@ function renderTagsResults(tags, keyword) {
             </div>
         `;
     }).join('');
+    
+    // 为话题搜索结果添加悬停效果
+    const tagItems = tagsResults.querySelectorAll('.tag-item');
+    tagItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+        });
+    });
 }
 
 /**
@@ -360,14 +404,14 @@ function renderUsersResults(users, keyword, currentUser) {
         if (!isCurrentUser) {
             followButton = `
                 <button class="btn-follow-user ${isFollowing ? 'following' : ''}" 
-                        onclick="toggleFollowUser('${user.username}', this)">
+                        onclick="event.stopPropagation(); toggleFollowUser('${user.username}', this)">
                     ${isFollowing ? '已关注' : '关注'}
                 </button>
             `;
         }
         
         return `
-            <div class="user-item">
+            <div class="user-item" onclick="visitUserProfile('${user.username}')" style="cursor: pointer;">
                 <div class="user-avatar">
                     <img src="${user.avatar || 'src/images/DefaultAvatar.png'}" alt="用户头像">
                 </div>
@@ -387,6 +431,20 @@ function renderUsersResults(users, keyword, currentUser) {
             </div>
         `;
     }).join('');
+    
+    // 添加用户卡片的悬停效果
+    const userItems = usersResults.querySelectorAll('.user-item');
+    userItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+        });
+    });
 }
 
 /**
@@ -527,5 +585,46 @@ function formatTime(date) {
     return `${year}-${month < 10 ? '0' + month : month}-${day < 10 ? '0' + day : day}`;
 }
 
+/**
+ * 跳转到用户个人主页
+ * @param {string} username - 用户名
+ */
+function visitUserProfile(username) {
+    // 获取用户列表
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const user = userList.find(u => u.username === username);
+    
+    if (!user) {
+        alert('用户不存在');
+        return;
+    }
+    
+    // 跳转到个人主页，传递用户ID作为参数
+    window.location.href = `profile.html?userId=${user.id}`;
+}
+
+/**
+ * 搜索指定话题
+ * @param {string} tagName - 话题名称
+ */
+function searchTag(tagName) {
+    // 切换到内容搜索标签
+    switchSearchTab('content');
+    
+    // 设置搜索关键词为话题名称
+    searchInput.value = tagName;
+    searchKeyword = tagName;
+    
+    // 执行搜索
+    performSearch();
+    
+    // 更新URL参数
+    const url = new URL(window.location);
+    url.searchParams.set('q', tagName);
+    window.history.pushState({}, '', url);
+}
+
 // 确保全局可用
-window.toggleFollowUser = toggleFollowUser; 
+window.toggleFollowUser = toggleFollowUser;
+window.visitUserProfile = visitUserProfile;
+window.searchTag = searchTag; 

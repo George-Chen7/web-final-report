@@ -168,6 +168,11 @@
     overflow: hidden;
     margin-right: 15px;
     flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.content-avatar:hover {
+    transform: scale(1.05);
 }
 
 .content-avatar img {
@@ -182,8 +187,13 @@
 
 .content-author {
     font-weight: 600;
-    color: var(--text-color);
+    color: var(--primary-color);
     margin-bottom: 5px;
+    transition: var(--transition);
+}
+
+.content-author:hover {
+    text-decoration: underline;
 }
 
 .content-time {
@@ -225,11 +235,27 @@
     background-color: var(--bg-color);
     border: 1px solid var(--border-color);
     transition: var(--transition);
+    position: relative;
 }
 
 .tag-item:hover {
     box-shadow: var(--shadow);
     transform: translateY(-2px);
+}
+
+.tag-item::after {
+    content: '点击搜索此话题';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 12px;
+    color: var(--text-light);
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.tag-item:hover::after {
+    opacity: 1;
 }
 
 .tag-header {
@@ -301,11 +327,27 @@
     background-color: var(--bg-color);
     border: 1px solid var(--border-color);
     transition: var(--transition);
+    position: relative;
 }
 
 .user-item:hover {
     box-shadow: var(--shadow);
     transform: translateY(-2px);
+}
+
+.user-item::after {
+    content: '点击查看主页';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 12px;
+    color: var(--text-light);
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.user-item:hover::after {
+    opacity: 1;
 }
 
 .user-avatar {
