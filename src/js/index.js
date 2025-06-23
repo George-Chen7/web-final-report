@@ -44,6 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化打卡签到功能
     initCheckinModule();
+    
+    // 初始化首页搜索功能
+    initHeaderSearch();
 });
 
 /**
@@ -1524,4 +1527,34 @@ function toggleBookmark(postId) {
 function renderPosts() {
     // 重新加载当前标签页的动态
     loadPosts(currentTabType, false);
+}
+
+/**
+ * 初始化首页搜索功能
+ */
+function initHeaderSearch() {
+    const headerSearchInput = document.getElementById('headerSearchInput');
+    const headerSearchBtn = document.getElementById('headerSearchBtn');
+    
+    if (headerSearchInput && headerSearchBtn) {
+        // 绑定搜索按钮点击事件
+        headerSearchBtn.addEventListener('click', function() {
+            const keyword = headerSearchInput.value.trim();
+            if (keyword) {
+                // 跳转到搜索页面并传递关键词
+                window.location.href = `search.html?q=${encodeURIComponent(keyword)}`;
+            }
+        });
+        
+        // 绑定回车键搜索
+        headerSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const keyword = headerSearchInput.value.trim();
+                if (keyword) {
+                    // 跳转到搜索页面并传递关键词
+                    window.location.href = `search.html?q=${encodeURIComponent(keyword)}`;
+                }
+            }
+        });
+    }
 }
