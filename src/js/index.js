@@ -1074,7 +1074,9 @@ function updateFollowCounts() {
     const followersCount = document.querySelector('.followers-count');
     
     if (followingCount) {
-        followingCount.textContent = currentUser.following ? currentUser.following.length : 0;
+        // 由于关注逻辑中同时存储了用户ID和用户名，所以需要除以2
+        const actualFollowingCount = currentUser.following ? Math.floor(currentUser.following.length / 2) : 0;
+        followingCount.textContent = actualFollowingCount;
     }
     
     if (followersCount) {

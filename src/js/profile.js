@@ -1051,9 +1051,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!clickUser) return;
         
-        // 关注数：从clickUser的following数组获取长度
+        // 关注数：从clickUser的following数组获取长度，由于同时存储了用户ID和用户名，需要除以2
         const followingArr = clickUser.following || [];
-        followingCount.textContent = followingArr.length;
+        const actualFollowingCount = Math.floor(followingArr.length / 2);
+        followingCount.textContent = actualFollowingCount;
         
         // 粉丝数：遍历所有用户，统计following数组中包含clickUser ID的用户数量
         // 确保数据类型一致，转换为字符串进行比较
@@ -1561,10 +1562,11 @@ function updateFollowCounts() {
     const user = userList.find(u => u.username === currentUser.username);
     
     if (user) {
-        // 更新关注数
+        // 更新关注数，由于关注逻辑中同时存储了用户ID和用户名，所以需要除以2
         const followingCount = document.querySelector('.following-count');
         if (followingCount) {
-            followingCount.textContent = (user.following || []).length;
+            const actualFollowingCount = Math.floor((user.following || []).length / 2);
+            followingCount.textContent = actualFollowingCount;
         }
         
         // 更新粉丝数
