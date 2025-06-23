@@ -1648,30 +1648,3 @@ function updateUserAvatarInPosts(username, newAvatar) {
         console.log(`用户 ${username} 在postList中没有找到相关动态或评论`);
     }
 }
-
-/**
- * 初始化顶部搜索功能（与首页一致）
- */
-function initHeaderSearch() {
-    const headerSearchInput = document.getElementById('headerSearchInput');
-    const headerSearchBtn = document.getElementById('headerSearchBtn');
-    if (headerSearchInput && headerSearchBtn) {
-        headerSearchBtn.addEventListener('click', function() {
-            const keyword = headerSearchInput.value.trim();
-            if (keyword) {
-                window.location.href = `search.html?q=${encodeURIComponent(keyword)}`;
-            }
-        });
-        headerSearchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const keyword = headerSearchInput.value.trim();
-                if (keyword) {
-                    window.location.href = `search.html?q=${encodeURIComponent(keyword)}`;
-                }
-            }
-        });
-    }
-}
-document.addEventListener('DOMContentLoaded', function() {
-    initHeaderSearch();
-});

@@ -11,9 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 绑定事件
     bindEvents();
-    
-    // 初始化顶部搜索功能（与首页一致）
-    initHeaderSearch();
 });
 
 /**
@@ -427,28 +424,4 @@ function showMessage(message, type = 'info') {
  */
 function isLoggedIn() {
     return localStorage.getItem('currentUser') !== null;
-}
-
-/**
- * 初始化顶部搜索功能（与首页一致）
- */
-function initHeaderSearch() {
-    const headerSearchInput = document.getElementById('headerSearchInput');
-    const headerSearchBtn = document.getElementById('headerSearchBtn');
-    if (headerSearchInput && headerSearchBtn) {
-        headerSearchBtn.addEventListener('click', function() {
-            const keyword = headerSearchInput.value.trim();
-            if (keyword) {
-                window.location.href = `search.html?q=${encodeURIComponent(keyword)}`;
-            }
-        });
-        headerSearchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const keyword = headerSearchInput.value.trim();
-                if (keyword) {
-                    window.location.href = `search.html?q=${encodeURIComponent(keyword)}`;
-                }
-            }
-        });
-    }
 }

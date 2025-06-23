@@ -241,34 +241,6 @@ textarea:focus {
     transition: var(--transition);
 }
 
-.search-box {
-    position: relative;
-    margin-right: 20px;
-}
-
-.search-box input {
-    width: 200px;
-    padding: 8px 12px;
-    padding-right: 40px;
-    border-radius: 20px;
-    background-color: var(--card-bg);
-    border: none;
-}
-
-.search-box button {
-    position: absolute;
-    right: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-light);
-}
-
 .auth-buttons {
     display: flex;
     align-items: center;
@@ -487,10 +459,6 @@ textarea:focus {
     .nav li {
         margin: 0 10px;
     }
-    
-    .search-box input {
-        width: 150px;
-    }
 }
 
 @media (max-width: 768px) {
@@ -545,10 +513,6 @@ textarea:focus {
 }
 
 @media (max-width: 576px) {
-    .search-box {
-        display: none;
-    }
-    
     .link-group {
         width: 100%;
     }
