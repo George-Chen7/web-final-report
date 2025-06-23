@@ -147,6 +147,16 @@
     gap: 20px;
 }
 
+/* 当内容结果为空时，使用flex布局居中显示 */
+.content-results:empty,
+.content-results:has(.empty-state),
+.content-results.empty-state-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
 .content-item {
     display: flex;
     padding: 20px;
@@ -227,6 +237,16 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
+}
+
+/* 当话题结果为空时，使用flex布局居中显示 */
+.tags-results:empty,
+.tags-results:has(.empty-state),
+.tags-results.empty-state-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
 }
 
 .tag-item {
@@ -317,6 +337,16 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
+}
+
+/* 当用户结果为空时，使用flex布局居中显示 */
+.users-results:empty,
+.users-results:has(.empty-state),
+.users-results.empty-state-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
 }
 
 .user-item {
@@ -428,11 +458,20 @@
     text-align: center;
     padding: 60px 20px;
     color: var(--text-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
 }
 
 .empty-state i {
     font-size: 48px;
     margin-bottom: 20px;
+    opacity: 0.5;
     color: var(--text-lighter);
 }
 
@@ -440,11 +479,14 @@
     font-size: 18px;
     margin-bottom: 10px;
     color: var(--text-color);
+    font-weight: 500;
 }
 
 .empty-state p {
     font-size: 14px;
     line-height: 1.5;
+    color: var(--text-light);
+    margin: 0;
 }
 
 /* 响应式设计 */
@@ -536,5 +578,59 @@
     
     .search-pane {
         padding: 15px 10px;
+    }
+}
+
+/* 话题动态显示样式 */
+.tag-posts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tag-posts-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.btn-back-to-tags {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-back-to-tags:hover {
+    background-color: var(--primary-dark);
+}
+
+.tag-posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .tag-posts-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .btn-back-to-tags {
+        align-self: flex-start;
     }
 } 

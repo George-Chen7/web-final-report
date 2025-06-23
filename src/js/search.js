@@ -168,6 +168,7 @@ function searchContent(keyword) {
  */
 function renderContentResults(posts, keyword) {
     if (posts.length === 0) {
+        contentResults.classList.add('empty-state-container');
         contentResults.innerHTML = `
             <div class="empty-state">
                 <i class="bi bi-search"></i>
@@ -177,6 +178,9 @@ function renderContentResults(posts, keyword) {
         `;
         return;
     }
+    
+    // 移除空状态容器类
+    contentResults.classList.remove('empty-state-container');
     
     const userList = JSON.parse(localStorage.getItem('userList') || '[]');
     
@@ -298,6 +302,7 @@ function searchTags(keyword) {
  */
 function renderTagsResults(tags, keyword) {
     if (tags.length === 0) {
+        tagsResults.classList.add('empty-state-container');
         tagsResults.innerHTML = `
             <div class="empty-state">
                 <i class="bi bi-tags"></i>
@@ -307,6 +312,9 @@ function renderTagsResults(tags, keyword) {
         `;
         return;
     }
+    
+    // 移除空状态容器类
+    tagsResults.classList.remove('empty-state-container');
     
     tagsResults.innerHTML = tags.map(tag => {
         const highlightedName = highlightKeyword(tag.name, keyword);
@@ -379,6 +387,7 @@ function searchUsers(keyword) {
  */
 function renderUsersResults(users, keyword, currentUser) {
     if (users.length === 0) {
+        usersResults.classList.add('empty-state-container');
         usersResults.innerHTML = `
             <div class="empty-state">
                 <i class="bi bi-people"></i>
@@ -388,6 +397,9 @@ function renderUsersResults(users, keyword, currentUser) {
         `;
         return;
     }
+    
+    // 移除空状态容器类
+    usersResults.classList.remove('empty-state-container');
     
     usersResults.innerHTML = users.map(user => {
         const highlightedName = highlightKeyword(user.nickname || user.username, keyword);
@@ -539,6 +551,8 @@ function showEmptyState(message) {
     if (activePane) {
         const resultsContainer = activePane.querySelector('[id$="Results"]');
         if (resultsContainer) {
+            // 添加空状态容器类
+            resultsContainer.classList.add('empty-state-container');
             resultsContainer.innerHTML = `
                 <div class="empty-state">
                     <i class="bi bi-search"></i>
@@ -608,15 +622,17 @@ function visitUserProfile(username) {
  * @param {string} tagName - 话题名称
  */
 function searchTag(tagName) {
-    // 切换到内容搜索标签
-    switchSearchTab('content');
+    // 确保当前在话题标签页
+    if (currentSearchType !== 'tags') {
+        switchSearchTab('tags');
+    }
     
     // 设置搜索关键词为话题名称
     searchInput.value = tagName;
     searchKeyword = tagName;
     
-    // 执行搜索
-    performSearch();
+    // 显示该话题相关的动态
+    showTagPosts(tagName);
     
     // 更新URL参数
     const url = new URL(window.location);
@@ -624,7 +640,159 @@ function searchTag(tagName) {
     window.history.pushState({}, '', url);
 }
 
+/**
+ * 显示指定话题相关的动态
+ * @param {string} tagName - 话题名称
+ */
+function showTagPosts(tagName) {
+    const allPosts = JSON.parse(localStorage.getItem('postList') || '[]');
+    const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+    
+    // 过滤掉被封禁用户的帖子
+    const filteredPosts = allPosts.filter(post => {
+        if (!post.user || !post.user.name) return false;
+        const user = userList.find(u => u.username === post.user.name);
+        return !user || !user.banned;
+    });
+    
+    // 查找包含该话题的帖子
+    const tagPosts = filteredPosts.filter(post => {
+        // 检查topics字段
+        if (post.topics && post.topics.length > 0) {
+            return post.topics.some(topic => 
+                topic.toLowerCase() === tagName.toLowerCase()
+            );
+        }
+        
+        // 从内容中提取话题标签
+        const topicMatches = post.content.match(/#(\S+)/g);
+        if (topicMatches) {
+            const topics = topicMatches.map(tag => tag.substring(1));
+            return topics.some(topic => 
+                topic.toLowerCase() === tagName.toLowerCase()
+            );
+        }
+        
+        return false;
+    });
+    
+    // 渲染话题相关的动态
+    renderTagPosts(tagPosts, tagName);
+    
+    // 更新结果计数
+    tagsCount.textContent = tagPosts.length;
+}
+
+/**
+ * 渲染话题相关的动态
+ * @param {Array} posts - 动态数组
+ * @param {string} tagName - 话题名称
+ */
+function renderTagPosts(posts, tagName) {
+    if (posts.length === 0) {
+        tagsResults.classList.add('empty-state-container');
+        tagsResults.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-tags"></i>
+                <h3>未找到包含话题"${tagName}"的动态</h3>
+                <p>尝试搜索其他话题</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // 移除空状态容器类
+    tagsResults.classList.remove('empty-state-container');
+    
+    const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+    
+    tagsResults.innerHTML = `
+        <div class="tag-posts-header">
+            <h3>话题"${tagName}"相关的动态 (${posts.length}条)</h3>
+            <button class="btn-back-to-tags" onclick="backToTagsSearch()">
+                <i class="bi bi-arrow-left"></i> 返回话题搜索
+            </button>
+        </div>
+        <div class="tag-posts-list">
+            ${posts.map(post => {
+                // 从userList中获取最新的用户信息
+                const latestUserInfo = userList.find(u => u.username === post.user.name);
+                const userAvatar = latestUserInfo?.avatar || post.user.avatar || 'src/images/DefaultAvatar.png';
+                
+                // 高亮话题标签
+                const highlightedContent = highlightKeyword(post.content, tagName);
+                
+                return `
+                    <div class="content-item">
+                        <div class="content-avatar" onclick="visitUserProfile('${post.user.name}')" style="cursor: pointer;" title="点击查看用户主页">
+                            <img src="${userAvatar}" alt="用户头像">
+                        </div>
+                        <div class="content-info">
+                            <div class="content-author" onclick="visitUserProfile('${post.user.name}')" style="cursor: pointer; color: var(--primary-color);" title="点击查看用户主页">${post.user.nickname || post.user.name}</div>
+                            <div class="content-time">${formatTime(post.time)}</div>
+                            <div class="content-text">${highlightedContent}</div>
+                            <div class="content-stats">
+                                <span><i class="bi bi-heart"></i> ${post.likes || 0}</span>
+                                <span><i class="bi bi-chat"></i> ${post.comments ? post.comments.length : 0}</span>
+                                <span><i class="bi bi-bookmark"></i> ${post.bookmarkedBy ? post.bookmarkedBy.length : 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+    
+    // 为动态项添加悬停效果
+    const contentItems = tagsResults.querySelectorAll('.content-item');
+    contentItems.forEach(item => {
+        const avatar = item.querySelector('.content-avatar');
+        const author = item.querySelector('.content-author');
+        
+        // 头像悬停效果
+        if (avatar) {
+            avatar.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+                this.style.transition = 'transform 0.2s ease';
+            });
+            
+            avatar.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        }
+        
+        // 作者名悬停效果
+        if (author) {
+            author.addEventListener('mouseenter', function() {
+                this.style.textDecoration = 'underline';
+            });
+            
+            author.addEventListener('mouseleave', function() {
+                this.style.textDecoration = 'none';
+            });
+        }
+    });
+}
+
+/**
+ * 返回话题搜索
+ */
+function backToTagsSearch() {
+    // 清空搜索框
+    searchInput.value = '';
+    searchKeyword = '';
+    
+    // 重新执行话题搜索
+    searchTags('');
+    
+    // 更新URL参数
+    const url = new URL(window.location);
+    url.searchParams.delete('q');
+    window.history.pushState({}, '', url);
+}
+
 // 确保全局可用
 window.toggleFollowUser = toggleFollowUser;
 window.visitUserProfile = visitUserProfile;
-window.searchTag = searchTag; 
+window.searchTag = searchTag;
+window.backToTagsSearch = backToTagsSearch; 
