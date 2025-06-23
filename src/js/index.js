@@ -306,6 +306,13 @@ function createPostHTML(post) {
     // 获取当前用户
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     
+    // 从userList中获取最新的用户信息（包括头像）
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const latestUserInfo = userList.find(u => u.username === post.user.name);
+    
+    // 使用最新的头像信息
+    const userAvatar = latestUserInfo?.avatar || post.user.avatar || 'src/images/DefaultAvatar.png';
+    
     // 判断是否显示关注按钮还是删除按钮
     let actionButtonHTML = '';
     if (currentUser && (currentUser.username === post.user.name || currentUser.id === post.user.id)) {
@@ -385,6 +392,10 @@ function createPostHTML(post) {
             };
             const commentTime = comment.time || comment.publishTime;
             
+            // 从userList中获取评论者的最新头像
+            const commenterLatestInfo = userList.find(u => u.username === commentUser.name);
+            const commenterAvatar = commenterLatestInfo?.avatar || commentUser.avatar || 'src/images/DefaultAvatar.png';
+            
             // 检查当前用户是否已点赞此评论
             const isLiked = comment.likedBy && comment.likedBy.includes(currentUser?.username);
             const likeIconClass = isLiked ? 'bi-heart-fill' : 'bi-heart';
@@ -392,7 +403,7 @@ function createPostHTML(post) {
             
             commentsHTML += `
                 <div class="comment-item" data-comment-id="${comment.id}">
-                    <img src="${commentUser.avatar}" alt="用户头像" class="user-avatar-clickable" data-user-id="${commentUser.id || commentUser.name}" data-user-name="${commentUser.name}" style="cursor: pointer;">
+                    <img src="${commenterAvatar}" alt="用户头像" class="user-avatar-clickable" data-user-id="${commentUser.id || commentUser.name}" data-user-name="${commentUser.name}" style="cursor: pointer;">
                     <div class="comment-content">
                         <h4>${commentUser.name}</h4>
                         <p>${comment.content}</p>
@@ -459,7 +470,7 @@ function createPostHTML(post) {
     return `
         <article class="post-item" data-post-id="${post.id}">
             <div class="post-header">
-                <img src="${post.user.avatar}" alt="用户头像" class="user-avatar-clickable" data-user-id="${post.user.id}" data-user-name="${post.user.name}" style="cursor: pointer;">
+                <img src="${userAvatar}" alt="用户头像" class="user-avatar-clickable" data-user-id="${post.user.id}" data-user-name="${post.user.name}" style="cursor: pointer;">
                 <div class="post-info">
                     <h3>${post.user.nickname || post.user.name}</h3>
                     <p class="post-meta">
@@ -542,6 +553,10 @@ function createCommentsHTML(post) {
             };
             const commentTime = comment.time || comment.publishTime;
             
+            // 从userList中获取评论者的最新头像
+            const commenterLatestInfo = userList.find(u => u.username === commentUser.name);
+            const commenterAvatar = commenterLatestInfo?.avatar || commentUser.avatar || 'src/images/DefaultAvatar.png';
+            
             // 检查当前用户是否已点赞此评论
             const isLiked = comment.likedBy && comment.likedBy.includes(currentUser?.username);
             const likeIconClass = isLiked ? 'bi-heart-fill' : 'bi-heart';
@@ -549,7 +564,7 @@ function createCommentsHTML(post) {
             
             commentsHTML += `
                 <div class="comment-item" data-comment-id="${comment.id}">
-                    <img src="${commentUser.avatar}" alt="用户头像" class="user-avatar-clickable" data-user-id="${commentUser.id || commentUser.name}" data-user-name="${commentUser.name}" style="cursor: pointer;">
+                    <img src="${commenterAvatar}" alt="用户头像" class="user-avatar-clickable" data-user-id="${commentUser.id || commentUser.name}" data-user-name="${commentUser.name}" style="cursor: pointer;">
                     <div class="comment-content">
                         <h4>${commentUser.name}</h4>
                         <p>${comment.content}</p>

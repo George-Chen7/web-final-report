@@ -137,6 +137,9 @@ function initProfilePostInteractions() {
 
 function createProfileCommentsHTML(post) {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    // 从userList中获取最新的用户信息
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
+    
     let commentsHTML = '';
     if (post.comments && post.comments.length > 0) {
         post.comments.forEach(comment => {
@@ -145,10 +148,15 @@ function createProfileCommentsHTML(post) {
                 avatar: comment.avatar
             };
             const commentTime = comment.time || comment.publishTime;
+            
+            // 从userList中获取评论者的最新头像
+            const commenterLatestInfo = userList.find(u => u.username === commentUser.name);
+            const commenterAvatar = commenterLatestInfo?.avatar || commentUser.avatar || 'src/images/DefaultAvatar.png';
+            
             commentsHTML += `
                 <div class="comment-item">
                     <div class="comment-avatar">
-                        <img src="${commentUser.avatar || 'src/images/DefaultAvatar.png'}" alt="用户头像">
+                        <img src="${commenterAvatar}" alt="用户头像">
                     </div>
                     <div class="comment-content">
                         <div class="comment-author">${commentUser.name}</div>
@@ -159,13 +167,18 @@ function createProfileCommentsHTML(post) {
             `;
         });
     }
+    
+    // 从userList中获取当前用户的最新头像
+    const currentUserLatestInfo = userList.find(u => u.username === currentUser?.username);
+    const currentUserAvatar = currentUserLatestInfo?.avatar || (currentUser && currentUser.avatar) || 'src/images/DefaultAvatar.png';
+    
     const isLoggedIn = currentUser && currentUser.role !== 'guest';
     const inputDisabled = !isLoggedIn;
     const inputPlaceholder = isLoggedIn ? '添加评论...' : '请先登录后评论...';
     const btnDisabled = !isLoggedIn;
     commentsHTML += `
         <div class="comment-input">
-            <img src="${currentUser && currentUser.avatar ? currentUser.avatar : 'src/images/DefaultAvatar.png'}" alt="用户头像">
+            <img src="${currentUserAvatar}" alt="用户头像">
             <input type="text" placeholder="${inputPlaceholder}" ${inputDisabled ? 'disabled' : ''}>
             <button class="btn-send-comment" ${btnDisabled ? 'disabled' : ''}>发送</button>
         </div>
@@ -619,13 +632,19 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.onload = function(e) {
                 profileAvatar.src = e.target.result;
                 if (userAvatar) {
-                userAvatar.src = e.target.result;
+                    userAvatar.src = e.target.result;
                 }
                 
-                // 更新用户头像
+                // 更新用户头像 - 同时更新currentUser和userList
                 const user = JSON.parse(localStorage.getItem('currentUser'));
                 user.avatar = e.target.result;
                 localStorage.setItem('currentUser', JSON.stringify(user));
+                
+                // 更新userList中相应用户的头像
+                updateUserAvatarInUserList(user.username, e.target.result);
+                
+                // 更新postList中该用户发布和评论的动态头像
+                updateUserAvatarInPosts(user.username, e.target.result);
                 
                 showMessage('头像更新成功', 'success');
             };
@@ -703,17 +722,15 @@ document.addEventListener('DOMContentLoaded', function() {
         profileName.textContent = clickUser.nickname || clickUser.username;
         profileId.textContent = `学号：${clickUser.studentId || '未知'}`;
         
-        // 更新头像
-        if (clickUser.avatar) {
-            profileAvatar.src = clickUser.avatar;
-            if (userAvatar) {
-                userAvatar.src = clickUser.avatar;
-            }
-        } else {
-            profileAvatar.src = 'src/images/DefaultAvatar.png';
-            if (userAvatar) {
-                userAvatar.src = 'src/images/DefaultAvatar.png';
-            }
+        // 从userList中获取最新的用户信息（包括头像）
+        const userList = JSON.parse(localStorage.getItem('userList')) || [];
+        const latestUserInfo = userList.find(u => u.username === clickUser.username);
+        
+        // 更新头像 - 优先使用userList中的最新头像
+        const avatarToUse = latestUserInfo?.avatar || clickUser.avatar || 'src/images/DefaultAvatar.png';
+        profileAvatar.src = avatarToUse;
+        if (userAvatar) {
+            userAvatar.src = avatarToUse;
         }
         
         // 更新封面图（如果有的话）
@@ -976,10 +993,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const bookmarkIconClass = isBookmarked ? 'bi-bookmark-fill' : 'bi-bookmark';
                 const bookmarkButtonClass = isBookmarked ? 'post-bookmark-btn active' : 'post-bookmark-btn';
                 
+                // 从userList中获取最新的用户头像
+                const userList = JSON.parse(localStorage.getItem('userList')) || [];
+                const latestUserInfo = userList.find(u => u.username === post.user.name);
+                const userAvatar = latestUserInfo?.avatar || post.user.avatar || 'src/images/DefaultAvatar.png';
+                
             postElement.innerHTML = `
                 <div class="post-header">
                     <div class="post-avatar">
-                            <img src="${post.user.avatar || 'src/images/DefaultAvatar.png'}" alt="头像">
+                            <img src="${userAvatar}" alt="头像">
                     </div>
                     <div class="post-author">
                             <div class="post-author-name">${post.user.nickname || post.user.name}</div>
@@ -1379,10 +1401,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const bookmarkIconClass = isBookmarked ? 'bi-bookmark-fill' : 'bi-bookmark';
             const bookmarkButtonClass = isBookmarked ? 'post-bookmark-btn active' : 'post-bookmark-btn';
             
+            // 从userList中获取最新的用户头像
+            const userList = JSON.parse(localStorage.getItem('userList')) || [];
+            const latestUserInfo = userList.find(u => u.username === post.user.name);
+            const userAvatar = latestUserInfo?.avatar || post.user.avatar || 'src/images/DefaultAvatar.png';
+            
             postElement.innerHTML = `
                 <div class="post-header">
                     <div class="post-avatar">
-                        <img src="${post.user.avatar || 'src/images/DefaultAvatar.png'}" alt="头像">
+                        <img src="${userAvatar}" alt="头像">
                     </div>
                     <div class="post-author">
                         <div class="post-author-name">${post.user.nickname || post.user.name}</div>
@@ -1553,3 +1580,71 @@ function updateFollowCounts() {
 
 // 确保全局可用
 window.initProfilePostInteractions = initProfilePostInteractions;
+
+/**
+ * 更新userList中指定用户的头像
+ * @param {string} username - 用户名
+ * @param {string} newAvatar - 新的头像URL
+ */
+function updateUserAvatarInUserList(username, newAvatar) {
+    let userList = JSON.parse(localStorage.getItem('userList')) || [];
+    const userIndex = userList.findIndex(u => u.username === username);
+    
+    if (userIndex !== -1) {
+        userList[userIndex].avatar = newAvatar;
+        localStorage.setItem('userList', JSON.stringify(userList));
+        console.log(`已更新userList中用户 ${username} 的头像`);
+    } else {
+        console.warn(`未找到用户 ${username} 在userList中`);
+    }
+}
+
+/**
+ * 更新postList中指定用户发布和评论的动态头像
+ * @param {string} username - 用户名
+ * @param {string} newAvatar - 新的头像URL
+ */
+function updateUserAvatarInPosts(username, newAvatar) {
+    let postList = JSON.parse(localStorage.getItem('postList')) || [];
+    let hasUpdated = false;
+    
+    // 遍历所有动态
+    postList.forEach(post => {
+        // 更新发布者头像
+        if (post.user && post.user.name === username) {
+            post.user.avatar = newAvatar;
+            hasUpdated = true;
+            console.log(`已更新动态 ${post.id} 中发布者 ${username} 的头像`);
+        }
+        
+        // 更新评论者头像
+        if (post.comments && post.comments.length > 0) {
+            post.comments.forEach(comment => {
+                // 兼容两种评论数据结构
+                const commentUser = comment.user || {
+                    name: comment.nickname || comment.username,
+                    avatar: comment.avatar
+                };
+                
+                if (commentUser.name === username) {
+                    commentUser.avatar = newAvatar;
+                    // 如果comment.user存在，直接更新；否则更新comment.avatar
+                    if (comment.user) {
+                        comment.user.avatar = newAvatar;
+                    } else {
+                        comment.avatar = newAvatar;
+                    }
+                    hasUpdated = true;
+                    console.log(`已更新动态 ${post.id} 中评论者 ${username} 的头像`);
+                }
+            });
+        }
+    });
+    
+    if (hasUpdated) {
+        localStorage.setItem('postList', JSON.stringify(postList));
+        console.log(`已更新postList中用户 ${username} 的所有头像`);
+    } else {
+        console.log(`用户 ${username} 在postList中没有找到相关动态或评论`);
+    }
+}
