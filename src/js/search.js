@@ -704,16 +704,18 @@ function renderTagPosts(posts, tagName) {
     // 移除空状态容器类
     tagsResults.classList.remove('empty-state-container');
     
-    const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
     
     tagsResults.innerHTML = `
         <div class="tag-posts-header">
-            <h3>话题"${tagName}"相关的动态 (${posts.length}条)</h3>
+            <div class="tag-posts-title">
+                <h3>话题"${tagName}"相关的动态 (${posts.length}条)</h3>
+            </div>
             <button class="btn-back-to-tags" onclick="backToTagsSearch()">
                 <i class="bi bi-arrow-left"></i> 返回话题搜索
             </button>
         </div>
-        <div class="tag-posts-list">
+        <div class="tag-posts-grid">
             ${posts.map(post => {
                 // 从userList中获取最新的用户信息
                 const latestUserInfo = userList.find(u => u.username === post.user.name);
@@ -722,16 +724,39 @@ function renderTagPosts(posts, tagName) {
                 // 高亮话题标签
                 const highlightedContent = highlightKeyword(post.content, tagName);
                 
+                // 处理图片显示
+                let imagesHTML = '';
+                if (post.images && post.images.length > 0) {
+                    const imageStorage = JSON.parse(localStorage.getItem('imageStorage') || '{}');
+                    const processedImages = post.images.map(imgPath => {
+                        if (imgPath.startsWith('user_uploads/')) {
+                            return imageStorage[imgPath] || 'src/images/DefaultAvatar.png';
+                        }
+                        return imgPath;
+                    });
+                    
+                    if (processedImages.length === 1) {
+                        imagesHTML = `<div class="post-image"><img src="${processedImages[0]}" alt="动态图片"></div>`;
+                    } else if (processedImages.length >= 2) {
+                        imagesHTML = `<div class="post-images-grid"><img src="${processedImages[0]}" alt="动态图片"><img src="${processedImages[1]}" alt="动态图片"></div>`;
+                    }
+                }
+                
                 return `
-                    <div class="content-item">
-                        <div class="content-avatar" onclick="visitUserProfile('${post.user.name}')" style="cursor: pointer;" title="点击查看用户主页">
-                            <img src="${userAvatar}" alt="用户头像">
+                    <div class="post-card" onclick="viewPostDetail(${post.id})" style="cursor: pointer;">
+                        <div class="post-card-header">
+                            <div class="post-author" onclick="event.stopPropagation(); visitUserProfile('${post.user.name}')" style="cursor: pointer;">
+                                <img src="${userAvatar}" alt="用户头像" class="author-avatar">
+                                <span class="author-name">${post.user.nickname || post.user.name}</span>
+                            </div>
+                            <div class="post-time">${formatTime(post.time)}</div>
                         </div>
-                        <div class="content-info">
-                            <div class="content-author" onclick="visitUserProfile('${post.user.name}')" style="cursor: pointer; color: var(--primary-color);" title="点击查看用户主页">${post.user.nickname || post.user.name}</div>
-                            <div class="content-time">${formatTime(post.time)}</div>
-                            <div class="content-text">${highlightedContent}</div>
-                            <div class="content-stats">
+                        <div class="post-card-content">
+                            <div class="post-text">${highlightedContent}</div>
+                            ${imagesHTML}
+                        </div>
+                        <div class="post-card-footer">
+                            <div class="post-stats">
                                 <span><i class="bi bi-heart"></i> ${post.likes || 0}</span>
                                 <span><i class="bi bi-chat"></i> ${post.comments ? post.comments.length : 0}</span>
                                 <span><i class="bi bi-bookmark"></i> ${post.bookmarkedBy ? post.bookmarkedBy.length : 0}</span>
@@ -743,34 +768,30 @@ function renderTagPosts(posts, tagName) {
         </div>
     `;
     
-    // 为动态项添加悬停效果
-    const contentItems = tagsResults.querySelectorAll('.content-item');
-    contentItems.forEach(item => {
-        const avatar = item.querySelector('.content-avatar');
-        const author = item.querySelector('.content-author');
+    // 为卡片添加悬停效果
+    const postCards = tagsResults.querySelectorAll('.post-card');
+    postCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+            this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+        });
         
-        // 头像悬停效果
-        if (avatar) {
-            avatar.addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.05)';
-                this.style.transition = 'transform 0.2s ease';
-            });
-            
-            avatar.addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1)';
-            });
-        }
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+        });
+    });
+    
+    // 为作者头像和姓名添加悬停效果
+    const postAuthors = tagsResults.querySelectorAll('.post-author');
+    postAuthors.forEach(author => {
+        author.addEventListener('mouseenter', function() {
+            this.style.opacity = '0.8';
+        });
         
-        // 作者名悬停效果
-        if (author) {
-            author.addEventListener('mouseenter', function() {
-                this.style.textDecoration = 'underline';
-            });
-            
-            author.addEventListener('mouseleave', function() {
-                this.style.textDecoration = 'none';
-            });
-        }
+        author.addEventListener('mouseleave', function() {
+            this.style.opacity = '1';
+        });
     });
 }
 
@@ -791,8 +812,21 @@ function backToTagsSearch() {
     window.history.pushState({}, '', url);
 }
 
+/**
+ * 查看动态详情
+ * @param {number} postId - 动态ID
+ */
+function viewPostDetail(postId) {
+    // 跳转到动态详情页面或显示动态详情弹窗
+    // 这里可以根据需要实现具体的跳转逻辑
+    console.log('查看动态详情:', postId);
+    // 暂时显示提示信息
+    alert('动态详情功能开发中...');
+}
+
 // 确保全局可用
 window.toggleFollowUser = toggleFollowUser;
 window.visitUserProfile = visitUserProfile;
 window.searchTag = searchTag;
-window.backToTagsSearch = backToTagsSearch; 
+window.backToTagsSearch = backToTagsSearch;
+window.viewPostDetail = viewPostDetail; 

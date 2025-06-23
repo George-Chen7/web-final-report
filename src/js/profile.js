@@ -1190,6 +1190,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const followingArr = clickUser.following || [];
         
         if (followingArr.length === 0) {
+            // 添加空状态容器类
+            followingList.classList.add('empty-state-container');
             // 显示空状态
             followingList.innerHTML = `
                 <div class="following-empty">
@@ -1200,6 +1202,9 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             return;
         }
+        
+        // 移除空状态容器类
+        followingList.classList.remove('empty-state-container');
         
         // 清空列表
         followingList.innerHTML = '';

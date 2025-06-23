@@ -1111,6 +1111,16 @@
     padding: 20px 0;
 }
 
+/* 当关注列表为空时，使用flex布局居中显示 */
+.following-list:empty,
+.following-list:has(.following-empty),
+.following-list.empty-state-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
 .following-item {
     display: flex;
     align-items: center;
@@ -1223,23 +1233,32 @@
     text-align: center;
     padding: 60px 20px;
     color: var(--text-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    width: 100%;
 }
 
 .following-empty i {
     font-size: 48px;
     margin-bottom: 20px;
     opacity: 0.5;
+    color: var(--text-lighter);
 }
 
 .following-empty h3 {
     font-size: 18px;
     margin-bottom: 10px;
     color: var(--text-color);
+    font-weight: 500;
 }
 
 .following-empty p {
     font-size: 14px;
     line-height: 1.5;
+    margin: 0;
 }
 
 /* 可见性标识 */

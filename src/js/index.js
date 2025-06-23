@@ -542,6 +542,8 @@ function updateLoadMoreButton(hasMore) {
  */
 function createCommentsHTML(post) {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    // 获取用户列表，用于获取评论者的最新头像
+    const userList = JSON.parse(localStorage.getItem('userList')) || [];
     let commentsHTML = '';
     
     if (post.comments && post.comments.length > 0) {
@@ -585,9 +587,13 @@ function createCommentsHTML(post) {
     const inputPlaceholder = isLoggedIn ? '添加评论...' : '请先登录后评论...';
     const btnDisabled = !isLoggedIn;
     
+    // 获取当前用户的头像 - 从userList中获取最新头像，与profile.js保持一致
+    const currentUserLatestInfo = userList.find(u => u.username === currentUser?.username);
+    const currentUserAvatar = currentUserLatestInfo?.avatar || (currentUser && currentUser.avatar) || 'src/images/DefaultAvatar.png';
+    
     commentsHTML += `
         <div class="comment-input">
-            <img src="src/images/DefaultAvatar.png" alt="用户头像">
+            <img src="${currentUserAvatar}" alt="用户头像">
             <input type="text" placeholder="${inputPlaceholder}" ${inputDisabled ? 'disabled' : ''}>
             <button class="btn-send-comment" ${btnDisabled ? 'disabled' : ''}>发送</button>
         </div>
@@ -894,8 +900,8 @@ function sendComment(postId, content) {
         commentCountSpan.textContent = posts[postIndex].comments.length;
     }
     
-    // 重新渲染动态
-    renderPosts();
+    // 只更新评论区域，保持评论区展开状态
+    updatePostComments(postId, posts[postIndex].comments);
     
     // 显示成功提示
     showToast('评论发表成功！');
@@ -909,9 +915,17 @@ function sendComment(postId, content) {
 function updatePostComments(postId, comments) {
     const commentsSection = document.querySelector(`[data-post-id="${postId}"] .post-comments`);
     if (commentsSection) {
+        // 保持展开状态
+        const wasExpanded = commentsSection.classList.contains('show');
+        
         // 重新渲染评论区域
         const post = { comments: comments };
         commentsSection.innerHTML = createCommentsHTML(post);
+        
+        // 如果之前是展开状态，保持展开
+        if (wasExpanded) {
+            commentsSection.classList.add('show');
+        }
         
         // 重新绑定评论事件
         bindCommentEvents(postId);
@@ -1335,8 +1349,8 @@ function toggleCommentLike(postId, commentId) {
     // 保存到localStorage
     localStorage.setItem('postList', JSON.stringify(posts));
     
-    // 重新渲染动态以更新评论点赞状态
-    renderPosts();
+    // 只更新评论区域，保持评论区展开状态
+    updatePostComments(postId, post.comments);
 }
 
 /**
@@ -1516,8 +1530,41 @@ function toggleBookmark(postId) {
     // 保存到localStorage
     localStorage.setItem('postList', JSON.stringify(posts));
     
-    // 重新渲染动态以更新收藏状态
-    renderPosts();
+    // 只更新收藏按钮状态，不重新渲染整个列表
+    updateBookmarkButton(postId, post.bookmarkedBy.length, !isBookmarked);
+}
+
+/**
+ * 更新收藏按钮状态
+ * @param {string} postId - 动态ID
+ * @param {number} bookmarkCount - 收藏数
+ * @param {boolean} isBookmarked - 是否已收藏
+ */
+function updateBookmarkButton(postId, bookmarkCount, isBookmarked) {
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (!postElement) return;
+    
+    const bookmarkButton = postElement.querySelector('.btn-bookmark');
+    const bookmarkCountSpan = bookmarkButton.querySelector('span');
+    const bookmarkIcon = bookmarkButton.querySelector('i');
+    
+    // 更新收藏数
+    bookmarkCountSpan.textContent = bookmarkCount || 0;
+    
+    // 更新收藏状态
+    if (isBookmarked) {
+        bookmarkButton.classList.add('active');
+        if (bookmarkIcon) {
+            bookmarkIcon.classList.remove('bi-bookmark');
+            bookmarkIcon.classList.add('bi-bookmark-fill');
+        }
+    } else {
+        bookmarkButton.classList.remove('active');
+        if (bookmarkIcon) {
+            bookmarkIcon.classList.remove('bi-bookmark-fill');
+            bookmarkIcon.classList.add('bi-bookmark');
+        }
+    }
 }
 
 /**
