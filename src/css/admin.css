@@ -7,11 +7,6 @@
 }
 
 /* 退出按钮样式 */
-.admin-actions {
-    display: flex;
-    align-items: center;
-}
-
 .btn-logout {
     padding: 8px 16px;
     background-color: #dc3545;
@@ -24,6 +19,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
+    margin-left: 10px;
 }
 
 .btn-logout:hover {

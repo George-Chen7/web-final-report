@@ -2,9 +2,60 @@
  * 个人资料页面脚本
  */
 
+// ========== 全局消息提示函数 ========== //
+function showMessage(message, type = 'info') {
+    // 检查是否已存在消息元素
+    let messageElement = document.querySelector('.message-container');
+    
+    if (!messageElement) {
+        // 创建消息容器
+        messageElement = document.createElement('div');
+        messageElement.className = 'message-container';
+        document.body.appendChild(messageElement);
+    }
+    
+    // 创建消息元素
+    const messageItem = document.createElement('div');
+    messageItem.className = `message message-${type}`;
+    messageItem.innerHTML = `
+        <div class="message-content">
+            <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // 添加到容器
+    messageElement.appendChild(messageItem);
+    
+    // 显示动画
+    setTimeout(() => {
+        messageItem.classList.add('show');
+    }, 10);
+    
+    // 自动移除
+    setTimeout(() => {
+        messageItem.classList.remove('show');
+        messageItem.addEventListener('transitionend', function() {
+            messageItem.remove();
+            
+            // 如果没有更多消息，移除容器
+            if (messageElement.children.length === 0) {
+                messageElement.remove();
+            }
+        });
+    }, 3000);
+}
+window.showMessage = showMessage;
+
 // 全局变量
 let clickUser = null;
 let isOwnProfile = false;
+let followingList = null; // 全局变量声明
+
+// 分页相关变量
+let currentPage = 1;
+let postsPerPage = 5;
+let allUserPosts = [];
 
 // ========== 全局交互函数 ========== //
 
@@ -362,11 +413,11 @@ function updateProfileBookmarkButton(postId, bookmarkCount, isBookmarked) {
 // ========== 全局函数 ========== //
 
 // 全局取消关注函数
-function unfollowUser(userId) {
+function unfollowUser(targetUsername) {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     
     if (!currentUser) {
-        alert('请先登录');
+        showMessage('请先登录', 'error');
         return;
     }
     
@@ -374,7 +425,7 @@ function unfollowUser(userId) {
     const userList = JSON.parse(localStorage.getItem('userList')) || [];
     const user = userList.find(u => u.username === currentUser.username);
     if (user && user.banned) {
-        alert('当前账号被封禁，无法操作');
+        showMessage('当前账号被封禁，无法操作', 'error');
         return;
     }
     
@@ -383,10 +434,10 @@ function unfollowUser(userId) {
     
     // 找到当前用户和目标用户
     const currentUserIndex = users.findIndex(u => u.username === currentUser.username);
-    const targetUser = users.find(u => String(u.id) === String(userId));
+    const targetUser = users.find(u => u.username === targetUsername);
     
     if (currentUserIndex === -1 || !targetUser) {
-        alert('用户不存在');
+        showMessage('用户不存在', 'error');
         return;
     }
     
@@ -394,7 +445,13 @@ function unfollowUser(userId) {
     
     // 从关注列表中移除
     if (currentUserData.following) {
-        currentUserData.following = currentUserData.following.filter(id => String(id) !== String(userId));
+        // 只处理用户名
+        currentUserData.following = currentUserData.following.filter(item => {
+            if (typeof item === 'string') {
+                return item !== targetUser.username;
+            }
+            return true; // 保留非字符串项（如果有的话）
+        });
     }
     
     // 从目标用户的粉丝列表中移除
@@ -424,7 +481,108 @@ function visitUserProfile(userId) {
     window.location.href = `profile.html?userId=${userId}`;
 }
 
+// 加载关注列表函数 - 全局函数
+function loadFollowingList() {
+    const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+    
+    // 更新clickUser的最新信息
+    const updatedClickUser = userList.find(u => String(u.id) === String(clickUser.id));
+    if (updatedClickUser) {
+        clickUser = updatedClickUser;
+    }
+    
+    // 获取followingList元素
+    const followingListElement = document.getElementById('followingList');
+    if (!clickUser || !followingListElement) return;
+    
+    const followingArr = clickUser.following || [];
+    
+    if (followingArr.length === 0) {
+        // 添加空状态容器类
+        followingListElement.classList.add('empty-state-container');
+        // 显示空状态
+        followingListElement.innerHTML = `
+            <div class="following-empty">
+                <i class="bi bi-people"></i>
+                <h3>还没有关注任何人</h3>
+                <p>去发现更多有趣的人吧！</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // 移除空状态容器类
+    followingListElement.classList.remove('empty-state-container');
+    
+    // 清空列表
+    followingListElement.innerHTML = '';
+    
+    // 获取关注用户的详细信息
+    const followingUsers = [];
+    followingArr.forEach(username => {
+        // 只处理用户名
+        if (typeof username === 'string') {
+            const user = userList.find(u => u.username === username);
+            if (user) {
+                followingUsers.push(user);
+            }
+        }
+    });
+    
+    // 渲染关注列表
+    followingUsers.forEach(user => {
+        const followingItem = document.createElement('div');
+        followingItem.className = 'following-item';
+        
+        // 根据是否访问自己的主页来决定按钮显示和样式
+        let actionButton = '';
+        if (isOwnProfile) {
+            // 访问自己的主页，显示取消关注按钮
+            actionButton = `<button class="btn btn-outline btn-sm unfollow-btn" onclick="event.stopPropagation(); unfollowUser('${user.username}')">取消关注</button>`;
+        } else {
+            // 访问他人的主页，添加clickable类显示点击提示
+            followingItem.classList.add('clickable');
+            actionButton = '';
+        }
+        
+        followingItem.innerHTML = `
+            <div class="following-avatar">
+                <img src="${user.avatar || 'src/images/DefaultAvatar.png'}" alt="${user.nickname || user.username}">
+            </div>
+            <div class="following-info">
+                <div class="following-name">${user.nickname || user.username}</div>
+                <div class="following-username">@${user.username}</div>
+            </div>
+            <div class="following-actions">
+                ${actionButton}
+            </div>
+        `;
+        
+        // 添加点击事件，让整个卡片可以点击进入用户主页
+        followingItem.addEventListener('click', function(e) {
+            console.log('关注列表项被点击:', user);
+            console.log('点击的元素:', e.target);
+            console.log('点击的元素类名:', e.target.className);
+            
+            // 如果点击的是取消关注按钮，不执行跳转
+            if (e.target.classList.contains('unfollow-btn')) {
+                console.log('点击的是取消关注按钮，不跳转');
+                return;
+            }
+            
+            console.log('准备跳转到用户主页:', user.id);
+            // 跳转到用户主页
+            visitUserProfile(user.id);
+        });
+        
+        followingListElement.appendChild(followingItem);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // 清理历史关注数据，只保留用户名
+    cleanFollowingList();
+    
     // 检查用户登录状态
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser) {
@@ -508,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 标签切换相关元素
     const profileTabs = document.querySelectorAll('.profile-tabs li');
     const tabPanes = document.querySelectorAll('.tab-pane');
-    const followingList = document.getElementById('followingList');
+    followingList = document.getElementById('followingList'); // 赋值给全局变量
     
     // 编辑资料相关元素
     const editProfileBtn = document.getElementById('editProfileBtn');
@@ -1051,10 +1209,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!clickUser) return;
         
-        // 关注数：从clickUser的following数组获取长度，由于同时存储了用户ID和用户名，需要除以2
+        // 关注数：从clickUser的following数组获取长度，需要去重计算
         const followingArr = clickUser.following || [];
-        const actualFollowingCount = Math.floor(followingArr.length / 2);
-        followingCount.textContent = actualFollowingCount;
+        const uniqueFollowing = new Set(followingArr.filter(item => typeof item === 'string'));
+        
+        followingCount.textContent = uniqueFollowing.size;
         
         // 粉丝数：遍历所有用户，统计following数组中包含clickUser ID的用户数量
         // 确保数据类型一致，转换为字符串进行比较
@@ -1099,50 +1258,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${year}-${month < 10 ? '0' + month : month}-${day < 10 ? '0' + day : day}`;
     }
     
-    // 显示消息提示
-    function showMessage(message, type = 'info') {
-        // 检查是否已存在消息元素
-        let messageElement = document.querySelector('.message-container');
-        
-        if (!messageElement) {
-            // 创建消息容器
-            messageElement = document.createElement('div');
-            messageElement.className = 'message-container';
-            document.body.appendChild(messageElement);
-        }
-        
-        // 创建消息元素
-        const messageItem = document.createElement('div');
-        messageItem.className = `message message-${type}`;
-        messageItem.innerHTML = `
-            <div class="message-content">
-                <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-                <span>${message}</span>
-            </div>
-        `;
-        
-        // 添加到容器
-        messageElement.appendChild(messageItem);
-        
-        // 显示动画
-        setTimeout(() => {
-            messageItem.classList.add('show');
-        }, 10);
-        
-        // 自动移除
-        setTimeout(() => {
-            messageItem.classList.remove('show');
-            messageItem.addEventListener('transitionend', function() {
-                messageItem.remove();
-                
-                // 如果没有更多消息，移除容器
-                if (messageElement.children.length === 0) {
-                    messageElement.remove();
-                }
-            });
-        }, 3000);
-    }
-    
     // 初始化标签切换
     function initProfileTabs() {
         profileTabs.forEach(tab => {
@@ -1172,102 +1287,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             });
-        });
-    }
-    
-    // 加载关注列表
-    function loadFollowingList() {
-        const userList = JSON.parse(localStorage.getItem('userList') || '[]');
-        
-        // 更新clickUser的最新信息
-        const updatedClickUser = userList.find(u => String(u.id) === String(clickUser.id));
-        if (updatedClickUser) {
-            clickUser = updatedClickUser;
-        }
-        
-        if (!clickUser || !followingList) return;
-        
-        const followingArr = clickUser.following || [];
-        
-        if (followingArr.length === 0) {
-            // 添加空状态容器类
-            followingList.classList.add('empty-state-container');
-            // 显示空状态
-            followingList.innerHTML = `
-                <div class="following-empty">
-                    <i class="bi bi-people"></i>
-                    <h3>还没有关注任何人</h3>
-                    <p>去发现更多有趣的人吧！</p>
-                </div>
-            `;
-            return;
-        }
-        
-        // 移除空状态容器类
-        followingList.classList.remove('empty-state-container');
-        
-        // 清空列表
-        followingList.innerHTML = '';
-        
-        // 获取关注用户的详细信息
-        const followingUsers = [];
-        followingArr.forEach(followingId => {
-            // 跳过用户名（只处理用户ID）
-            if (typeof followingId === 'number' || !isNaN(Number(followingId))) {
-                const user = userList.find(u => String(u.id) === String(followingId));
-                if (user) {
-                    followingUsers.push(user);
-                }
-            }
-        });
-        
-        // 渲染关注列表
-        followingUsers.forEach(user => {
-            const followingItem = document.createElement('div');
-            followingItem.className = 'following-item';
-            
-            // 根据是否访问自己的主页来决定按钮显示和样式
-            let actionButton = '';
-            if (isOwnProfile) {
-                // 访问自己的主页，显示取消关注按钮
-                actionButton = `<button class="btn btn-outline btn-sm unfollow-btn" onclick="event.stopPropagation(); unfollowUser('${user.id}')">取消关注</button>`;
-            } else {
-                // 访问他人的主页，添加clickable类显示点击提示
-                followingItem.classList.add('clickable');
-                actionButton = '';
-            }
-            
-            followingItem.innerHTML = `
-                <div class="following-avatar">
-                    <img src="${user.avatar || 'src/images/DefaultAvatar.png'}" alt="${user.nickname || user.username}">
-                </div>
-                <div class="following-info">
-                    <div class="following-name">${user.nickname || user.username}</div>
-                    <div class="following-username">@${user.username}</div>
-                </div>
-                <div class="following-actions">
-                    ${actionButton}
-                </div>
-            `;
-            
-            // 添加点击事件，让整个卡片可以点击进入用户主页
-            followingItem.addEventListener('click', function(e) {
-                console.log('关注列表项被点击:', user);
-                console.log('点击的元素:', e.target);
-                console.log('点击的元素类名:', e.target.className);
-                
-                // 如果点击的是取消关注按钮，不执行跳转
-                if (e.target.classList.contains('unfollow-btn')) {
-                    console.log('点击的是取消关注按钮，不跳转');
-                    return;
-                }
-                
-                console.log('准备跳转到用户主页:', user.id);
-                // 跳转到用户主页
-                visitUserProfile(user.id);
-            });
-            
-            followingList.appendChild(followingItem);
         });
     }
     
@@ -1567,11 +1586,13 @@ function updateFollowCounts() {
     const user = userList.find(u => u.username === currentUser.username);
     
     if (user) {
-        // 更新关注数，由于关注逻辑中同时存储了用户ID和用户名，所以需要除以2
+        // 更新关注数，只处理用户名
         const followingCount = document.querySelector('.following-count');
         if (followingCount) {
-            const actualFollowingCount = Math.floor((user.following || []).length / 2);
-            followingCount.textContent = actualFollowingCount;
+            const followingArr = user.following || [];
+            // 只保留用户名，去重
+            const uniqueFollowing = new Set(followingArr.filter(item => typeof item === 'string'));
+            followingCount.textContent = uniqueFollowing.size;
         }
         
         // 更新粉丝数
@@ -1653,5 +1674,52 @@ function updateUserAvatarInPosts(username, newAvatar) {
         console.log(`已更新postList中用户 ${username} 的所有头像`);
     } else {
         console.log(`用户 ${username} 在postList中没有找到相关动态或评论`);
+    }
+}
+
+// ========== 清理历史关注数据，只保留用户名 ========== //
+function cleanFollowingList() {
+    const userList = JSON.parse(localStorage.getItem('userList') || '[]');
+    let hasChanges = false;
+    
+    userList.forEach(user => {
+        if (Array.isArray(user.following)) {
+            const originalLength = user.following.length;
+            // 只保留用户名，移除所有ID
+            user.following = user.following.filter(item => {
+                if (typeof item === 'string') {
+                    // 检查是否是有效的用户名
+                    return userList.some(u => u.username === item);
+                }
+                return false; // 移除所有非字符串（ID）
+            });
+            
+            if (user.following.length !== originalLength) {
+                hasChanges = true;
+                console.log(`清理用户 ${user.username} 的关注列表: ${originalLength} -> ${user.following.length}`);
+            }
+        }
+        
+        if (Array.isArray(user.followers)) {
+            const originalLength = user.followers.length;
+            // 只保留用户名，移除所有ID
+            user.followers = user.followers.filter(item => {
+                if (typeof item === 'string') {
+                    // 检查是否是有效的用户名
+                    return userList.some(u => u.username === item);
+                }
+                return false; // 移除所有非字符串（ID）
+            });
+            
+            if (user.followers.length !== originalLength) {
+                hasChanges = true;
+                console.log(`清理用户 ${user.username} 的粉丝列表: ${originalLength} -> ${user.followers.length}`);
+            }
+        }
+    });
+    
+    if (hasChanges) {
+        localStorage.setItem('userList', JSON.stringify(userList));
+        console.log('已清理所有用户的关注和粉丝数据，只保留用户名');
     }
 }
