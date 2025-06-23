@@ -648,6 +648,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const profileAvatar = document.getElementById('profileAvatar');
     const profileCover = document.getElementById('profileCover');
     const userAvatar = document.querySelector('.user-info .avatar img');
+    // 右上角头像始终显示当前用户头像
+    if (userAvatar && currentUser.avatar) {
+        userAvatar.src = currentUser.avatar;
+    }
     const postCount = document.getElementById('postCount');
     const followingCount = document.getElementById('followingCount');
     const followerCount = document.getElementById('followerCount');
@@ -789,21 +793,16 @@ document.addEventListener('DOMContentLoaded', function() {
             
             reader.onload = function(e) {
                 profileAvatar.src = e.target.result;
-                if (userAvatar) {
+                // 只在访问自己主页时才更新右上角头像
+                if (userAvatar && isOwnProfile) {
                     userAvatar.src = e.target.result;
                 }
-                
                 // 更新用户头像 - 同时更新currentUser和userList
                 const user = JSON.parse(localStorage.getItem('currentUser'));
                 user.avatar = e.target.result;
                 localStorage.setItem('currentUser', JSON.stringify(user));
-                
-                // 更新userList中相应用户的头像
                 updateUserAvatarInUserList(user.username, e.target.result);
-                
-                // 更新postList中该用户发布和评论的动态头像
                 updateUserAvatarInPosts(user.username, e.target.result);
-                
                 showMessage('头像更新成功', 'success');
             };
             
@@ -887,7 +886,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // 更新头像 - 优先使用userList中的最新头像
         const avatarToUse = latestUserInfo?.avatar || clickUser.avatar || 'src/images/DefaultAvatar.png';
         profileAvatar.src = avatarToUse;
-        if (userAvatar) {
+        // 只在访问自己主页时才更新右上角头像
+        if (userAvatar && isOwnProfile) {
             userAvatar.src = avatarToUse;
         }
         
