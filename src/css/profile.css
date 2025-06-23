@@ -1341,3 +1341,20 @@
     font-size: 14px;
     line-height: 1.5;
 }
+
+.profile-actions #editProfileBtn {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 24px;
+    padding: 8px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(158,27,69,0.08);
+    transition: var(--transition);
+}
+.profile-actions #editProfileBtn:hover {
+    background-color: var(--primary-dark);
+    color: var(--white);
+    box-shadow: 0 4px 16px rgba(158,27,69,0.15);
+}
